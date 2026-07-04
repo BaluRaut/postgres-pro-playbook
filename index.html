@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostgreSQL Pro Playbook — 46 Battle-Tested Use Cases</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+  :root{
+    --primary:#1a73e8; --primary-dark:#174ea6; --ink:#202124; --muted:#5f6368;
+    --bg:#f1f3f6; --card:#ffffff; --border:#e0e0e0; --green:#1e8e3e; --red:#d93025;
+    --amber:#e37400; --purple:#7b1fa2; --code-bg:#263238;
+    --sh1:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15);
+    --sh2:0 1px 3px rgba(60,64,67,.3),0 4px 8px 3px rgba(60,64,67,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Roboto',-apple-system,'Segoe UI',Arial,sans-serif;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px}
+  header{background:linear-gradient(120deg,#1a73e8 0%,#3f51b5 60%,#7b1fa2 100%);color:#fff;border-radius:16px;padding:40px 36px;box-shadow:var(--sh2);margin-bottom:28px}
+  header h1{font-size:2.1rem;font-weight:700;letter-spacing:-.5px}
+  header h1 span{color:#ffd54f}
+  header p{color:rgba(255,255,255,.92);margin-top:10px;max-width:760px;font-size:.95rem}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 14px;font-size:.75rem;font-weight:500;letter-spacing:.5px;margin-bottom:14px}
+  nav.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:8px;margin:4px 0 36px}
+  nav.toc a{display:block;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:8px 16px;color:var(--ink);text-decoration:none;font-size:.8rem;font-weight:500;box-shadow:var(--sh1);transition:box-shadow .15s,transform .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  nav.toc a:hover{box-shadow:var(--sh2);transform:translateY(-1px);color:var(--primary)}
+  nav.toc a b{color:var(--primary);margin-right:8px;font-weight:700}
+  h3.cat{margin:44px 0 16px;font-size:.8rem;text-transform:uppercase;letter-spacing:2.5px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;gap:12px}
+  h3.cat::after{content:'';flex:1;height:1px;background:var(--border)}
+  section.uc{background:var(--card);border:none;border-radius:16px;padding:28px;margin-bottom:24px;scroll-margin-top:20px;box-shadow:var(--sh1);transition:box-shadow .2s}
+  section.uc:hover{box-shadow:var(--sh2)}
+  section.uc h2{font-size:1.3rem;font-weight:500;margin-bottom:6px;color:var(--ink)}
+  section.uc h2 .num{display:inline-flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;border-radius:50%;width:34px;height:34px;font-size:.85rem;font-weight:700;font-family:'Roboto Mono',monospace;margin-right:12px;vertical-align:middle}
+  .scenario{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+  .label{font-size:.68rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:16px 0 6px;font-weight:700}
+  pre{background:var(--code-bg);border-radius:10px;padding:16px;overflow-x:auto;font-size:.8rem;line-height:1.55;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+  pre code{font-family:'Roboto Mono',ui-monospace,Menlo,monospace;color:#eceff1;background:none;padding:0}
+  code{font-family:'Roboto Mono',ui-monospace,Menlo,monospace;background:#eef1f5;color:#b3261e;border-radius:4px;padding:1px 5px;font-size:.83em}
+  .kw{color:#ff8a80}.fn{color:#b39ddb}.str{color:#a5d6ff;color:#80cbc4}.cm{color:#78909c;font-style:italic}.nm{color:#82b1ff}
+  table.out{border-collapse:collapse;width:100%;font-size:.8rem;font-family:'Roboto Mono',Menlo,monospace;margin-top:4px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--sh1)}
+  table.out th{background:#e8f0fe;color:var(--primary-dark);text-align:left;padding:8px 14px;border-bottom:2px solid #c6dafc;font-weight:700}
+  table.out td{padding:7px 14px;border-bottom:1px solid #eceff1;color:var(--ink)}
+  table.out tr:last-child td{border-bottom:none}
+  table.out tr:nth-child(even) td{background:#fafbfc}
+  .benefit{background:#e6f4ea;border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:14px 18px;margin-top:16px;font-size:.87rem}
+  .benefit b{color:#137333}
+  .warn{background:#fef7e0;border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin-top:12px;font-size:.87rem}
+  .warn b{color:#b06000}
+  .gotcha{background:#fce8e6;border-left:4px solid var(--red);border-radius:0 10px 10px 0;padding:14px 18px;margin-top:12px;font-size:.87rem}
+  .gotcha b{color:#c5221f}
+  .analogy{background:#f3e8fd;border-left:4px solid var(--purple);border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 14px;font-size:.87rem}
+  .analogy b{color:var(--purple)}
+  .dodont{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  @media(max-width:760px){.dodont{grid-template-columns:1fr}}
+  .dd{border-radius:12px;padding:16px 18px;box-shadow:var(--sh1)}
+  .dd.do{background:#e6f4ea;border-top:4px solid var(--green)}
+  .dd.dont{background:#fce8e6;border-top:4px solid var(--red)}
+  .dd h4{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-weight:700}
+  .dd.do h4{color:#137333}.dd.dont h4{color:#c5221f}
+  .dd ul{list-style:none}
+  .dd li{font-size:.84rem;margin-bottom:8px;padding-left:22px;position:relative}
+  .dd.do li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700}
+  .dd.dont li::before{content:'✕';position:absolute;left:0;color:var(--red);font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  footer{color:var(--muted);font-size:.8rem;text-align:center;padding:36px 0 20px;margin-top:36px;border-top:1px solid var(--border)}
+  a.top{position:fixed;bottom:22px;right:22px;background:var(--primary);color:#fff;border:none;border-radius:28px;padding:12px 20px;text-decoration:none;font-size:.82rem;font-weight:500;box-shadow:var(--sh2)}
+  a.top:hover{background:var(--primary-dark)}
+</style>
+</head>
+<body id="top">
+<div class="wrap">
+
+<header>
+  <div class="badge">PostgreSQL · Field Guide · 46 Use Cases</div>
+  <h1>PostgreSQL <span>Pro Playbook</span></h1>
+  <p>The patterns a 20-year Postgres veteran reaches for daily — each with a real table, a real query, real output, and why the pattern wins. Copy, run, adapt.</p>
+</header>
+
+<nav class="toc">
+  <a href="#uc1"><b>01</b>UPSERT — ON CONFLICT</a>
+  <a href="#uc2"><b>02</b>JSONB + GIN index</a>
+  <a href="#uc3"><b>03</b>Top-N per group (window)</a>
+  <a href="#uc4"><b>04</b>Running totals / moving avg</a>
+  <a href="#uc5"><b>05</b>Recursive CTE — hierarchies</a>
+  <a href="#uc6"><b>06</b>LATERAL join</a>
+  <a href="#uc7"><b>07</b>Full-text search</a>
+  <a href="#uc8"><b>08</b>Partial indexes</a>
+  <a href="#uc9"><b>09</b>Covering indexes (INCLUDE)</a>
+  <a href="#uc10"><b>10</b>Keyset pagination</a>
+  <a href="#uc11"><b>11</b>Job queue — SKIP LOCKED</a>
+  <a href="#uc12"><b>12</b>DISTINCT ON — latest row</a>
+  <a href="#uc13"><b>13</b>FILTER — pivot reports</a>
+  <a href="#uc14"><b>14</b>generate_series — gap fill</a>
+  <a href="#uc15"><b>15</b>Table partitioning</a>
+  <a href="#uc16"><b>16</b>Materialized views</a>
+  <a href="#uc17"><b>17</b>Row-Level Security</a>
+  <a href="#uc18"><b>18</b>Arrays + unnest</a>
+  <a href="#uc19"><b>19</b>Generated columns</a>
+  <a href="#uc20"><b>20</b>Audit log triggers</a>
+  <a href="#uc21"><b>21</b>EXPLAIN ANALYZE tuning</a>
+  <a href="#uc22"><b>22</b>pg_stat_statements</a>
+  <a href="#uc23"><b>23</b>Exclusion constraints</a>
+  <a href="#uc24"><b>24</b>Advisory locks</a>
+  <a href="#uc25"><b>25</b>LISTEN / NOTIFY</a>
+  <a href="#uc26"><b>26</b>COPY — bulk loading</a>
+  <a href="#uc27"><b>27</b>Soft delete done right</a>
+  <a href="#uc28"><b>28</b>Isolation levels</a>
+  <a href="#uc29"><b>29</b>VACUUM & bloat</a>
+  <a href="#uc30"><b>30</b>Connection pooling</a>
+  <a href="#uc31"><b>31</b>NULL — three-valued logic</a>
+  <a href="#uc32"><b>32</b>timestamptz vs timestamp</a>
+  <a href="#uc33"><b>33</b>Zero-downtime DDL</a>
+  <a href="#uc34"><b>34</b>Fast counts on big tables</a>
+  <a href="#uc35"><b>35</b>Find &amp; kill duplicates</a>
+  <a href="#uc36"><b>36</b>Foreign keys — ON DELETE</a>
+  <a href="#uc37"><b>37</b>CHECK vs ENUM vs lookup</a>
+  <a href="#uc38"><b>38</b>Primary keys — ID vs UUID</a>
+  <a href="#uc39"><b>39</b>EXISTS vs IN vs JOIN</a>
+  <a href="#uc40"><b>40</b>Fuzzy search — pg_trgm</a>
+  <a href="#uc41"><b>41</b>RETURNING + CTE pipelines</a>
+  <a href="#uc42"><b>42</b>Views as API contracts</a>
+  <a href="#uc43"><b>43</b>Batch updates in chunks</a>
+  <a href="#uc44"><b>44</b>Backups — dump vs PITR</a>
+  <a href="#uc45"><b>45</b>Roles &amp; least privilege</a>
+  <a href="#uc46"><b>46</b>Extended statistics</a>
+</nav>
+
+<h3 class="cat">Writing Data</h3>
+
+<!-- ============ 1. UPSERT ============ -->
+<section class="uc" id="uc1">
+  <h2><span class="num">01</span>UPSERT — INSERT ... ON CONFLICT</h2>
+  <p class="scenario">Scenario: syncing user profiles from an external system — insert if new, update if the email already exists. No race conditions, one statement.</p>
+  <div class="analogy"><b>Analogy:</b> Like a hotel front desk: “if you already have a reservation I’ll update it, otherwise I’ll create one” — decided in a single visit, so two clerks can never accidentally create duplicate bookings for the same guest.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> users (
+  id         <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  email      <span class="nm">text</span> <span class="kw">UNIQUE NOT NULL</span>,
+  full_name  <span class="nm">text</span>,
+  login_count <span class="nm">int</span> <span class="kw">DEFAULT</span> 0,
+  updated_at <span class="nm">timestamptz</span> <span class="kw">DEFAULT</span> <span class="fn">now</span>()
+);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">INSERT INTO</span> users (email, full_name)
+<span class="kw">VALUES</span> (<span class="str">'ravi@corp.com'</span>, <span class="str">'Ravi Kumar'</span>)
+<span class="kw">ON CONFLICT</span> (email) <span class="kw">DO UPDATE SET</span>
+  full_name   = <span class="nm">EXCLUDED</span>.full_name,
+  login_count = users.login_count + 1,
+  updated_at  = <span class="fn">now</span>()
+<span class="kw">RETURNING</span> id, email, login_count;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>id</th><th>email</th><th>login_count</th></tr>
+    <tr><td>42</td><td>ravi@corp.com</td><td>3</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Idempotent APIs: retrying a “create user” request twice is harmless</li><li>Counters: <code>ON CONFLICT DO UPDATE SET views = t.views + 1</code></li><li>Nightly syncs from external systems — insert new, refresh existing</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>SELECT</code>, then <code>if found: UPDATE else: INSERT</code> in app code — two requests race, one dies with duplicate-key</li><li>UPSERT as a bulk-import tool for millions of rows — use COPY into a staging table + one merge statement instead</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Replaces the buggy "SELECT then INSERT-or-UPDATE" dance. Atomic — safe under heavy concurrency, no unique-violation retries. <code>EXCLUDED</code> refers to the row you tried to insert. Add <code>RETURNING</code> to get the final row back without a second query. Use <code>DO NOTHING</code> for idempotent ingestion.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>ON CONFLICT (email)</code> requires a UNIQUE constraint/index on exactly that column — without it: <i>“there is no unique or exclusion constraint matching the ON CONFLICT specification”</i>. And if one INSERT batch contains the same email twice, it fails with “cannot affect row a second time” — dedupe the batch first.</div>
+</section>
+
+<!-- ============ 2. JSONB ============ -->
+<section class="uc" id="uc2">
+  <h2><span class="num">02</span>JSONB — schemaless data with real indexes</h2>
+  <p class="scenario">Scenario: product catalog where every category has different attributes. You want NoSQL flexibility with SQL joins and ACID.</p>
+  <div class="analogy"><b>Analogy:</b> A filing cabinet where every folder has a flexible “misc” pouch: structured drawers for the common fields, a pouch for the odd ones — and the card catalog (GIN index) can still find things inside the pouches.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> products (
+  id    <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  name  <span class="nm">text NOT NULL</span>,
+  attrs <span class="nm">jsonb NOT NULL DEFAULT</span> <span class="str">'{}'</span>
+);
+<span class="kw">CREATE INDEX</span> idx_products_attrs <span class="kw">ON</span> products <span class="kw">USING</span> <span class="fn">gin</span> (attrs);
+
+<span class="kw">INSERT INTO</span> products (name, attrs) <span class="kw">VALUES</span>
+(<span class="str">'ThinkPad X1'</span>,  <span class="str">'{"type":"laptop","ram_gb":32,"tags":["business","14inch"]}'</span>),
+(<span class="str">'Pixel 9'</span>,      <span class="str">'{"type":"phone","ram_gb":12,"tags":["android","5g"]}'</span>),
+(<span class="str">'MacBook Air'</span>,  <span class="str">'{"type":"laptop","ram_gb":16,"tags":["m3","13inch"]}'</span>);</code></pre>
+  <div class="label">Query — containment (@>) uses the GIN index</div>
+  <pre><code><span class="kw">SELECT</span> name, attrs-&gt;&gt;<span class="str">'ram_gb'</span> <span class="kw">AS</span> ram, attrs-&gt;<span class="str">'tags'</span> <span class="kw">AS</span> tags
+<span class="kw">FROM</span> products
+<span class="kw">WHERE</span> attrs @&gt; <span class="str">'{"type":"laptop"}'</span>
+  <span class="kw">AND</span> (attrs-&gt;&gt;<span class="str">'ram_gb'</span>)::<span class="nm">int</span> &gt;= 16;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>name</th><th>ram</th><th>tags</th></tr>
+    <tr><td>ThinkPad X1</td><td>32</td><td>["business", "14inch"]</td></tr>
+    <tr><td>MacBook Air</td><td>16</td><td>["m3", "13inch"]</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Variable product attributes, user preferences, webhook/API payloads</li><li>Audit snapshots of “the whole row as it was” (#20)</li><li>Fields you query with <code>@&gt;</code> containment + GIN</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>One table = <code>id + data jsonb</code> for your whole app — no types, no constraints, no FKs; you bought MongoDB’s problems with none of its tooling</li><li>Filtering every query on <code>attrs-&gt;&gt;'status'</code> — promote hot fields to real columns</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>jsonb</code> is binary, deduplicated, and indexable — always prefer it over <code>json</code>. GIN + <code>@&gt;</code> containment gives millisecond lookups over millions of semi-structured rows. Operators: <code>-&gt;</code> (json), <code>-&gt;&gt;</code> (text), <code>#&gt;&gt;</code> (path), <code>?</code> (key exists), <code>jsonb_set()</code> to update.</div>
+  <div class="warn"><b>Veteran tip:</b> Columns you filter on constantly deserve promotion to real columns. JSONB is for the long tail of attributes, not a replacement for schema design.</div>
+</section>
+
+<h3 class="cat">Analytics &amp; Reporting</h3>
+
+<!-- ============ 3. Top-N per group ============ -->
+<section class="uc" id="uc3">
+  <h2><span class="num">03</span>Top-N per group — ROW_NUMBER()</h2>
+  <p class="scenario">Scenario: "show the 2 highest-paid employees in each department" — the classic interview question, solved the pro way.</p>
+  <div class="analogy"><b>Analogy:</b> Ranking students within each classroom instead of across the whole school — PARTITION BY draws the classroom walls, ORDER BY hands out the ranks inside each room.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> employees (id <span class="nm">int</span>, name <span class="nm">text</span>, dept <span class="nm">text</span>, salary <span class="nm">int</span>);
+<span class="kw">INSERT INTO</span> employees <span class="kw">VALUES</span>
+(1,<span class="str">'Asha'</span>,<span class="str">'Eng'</span>,180000),(2,<span class="str">'Vikram'</span>,<span class="str">'Eng'</span>,165000),
+(3,<span class="str">'Meera'</span>,<span class="str">'Eng'</span>,150000),(4,<span class="str">'John'</span>,<span class="str">'Sales'</span>,120000),
+(5,<span class="str">'Priya'</span>,<span class="str">'Sales'</span>,140000),(6,<span class="str">'Dev'</span>,<span class="str">'Sales'</span>,110000);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> name, dept, salary,
+         <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> employees
+) t <span class="kw">WHERE</span> rn &lt;= 2;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>name</th><th>dept</th><th>salary</th><th>rn</th></tr>
+    <tr><td>Asha</td><td>Eng</td><td>180000</td><td>1</td></tr>
+    <tr><td>Vikram</td><td>Eng</td><td>165000</td><td>2</td></tr>
+    <tr><td>Priya</td><td>Sales</td><td>140000</td><td>1</td></tr>
+    <tr><td>John</td><td>Sales</td><td>120000</td><td>2</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Leaderboards, “top 3 products per category”, best N per region</li><li>Deduplication: keep <code>rn = 1</code>, delete the rest</li><li>Always with a unique tiebreaker in ORDER BY</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>One query per department in an app loop (N+1 queries)</li><li><code>GROUP BY dept + MAX(salary)</code> joined back — returns multiple rows on salary ties and misses the runner-up entirely</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> One scan, no self-joins, no correlated subqueries. Swap <code>ROW_NUMBER()</code> for <code>RANK()</code> (gaps on ties) or <code>DENSE_RANK()</code> (no gaps) depending on tie semantics. This family of window functions replaces 90% of painful GROUP BY gymnastics.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> If two employees tie on salary, <code>ROW_NUMBER()</code> picks a winner <em>arbitrarily</em> — and differently on each run. Why wrong: non-deterministic reports. Fix: add a tiebreaker (<code>ORDER BY salary DESC, id</code>) or use <code>RANK()</code> if ties should share a position.</div>
+</section>
+
+<!-- ============ 4. Running totals ============ -->
+<section class="uc" id="uc4">
+  <h2><span class="num">04</span>Running totals &amp; moving averages</h2>
+  <p class="scenario">Scenario: finance dashboard — cumulative revenue and a 3-day moving average, straight from SQL, no app-side loops.</p>
+  <div class="analogy"><b>Analogy:</b> A bank passbook: every line shows both the transaction and the balance-so-far. The window frame is you sliding a ruler over the last 3 lines to average them.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> daily_sales (day <span class="nm">date</span>, revenue <span class="nm">numeric</span>);
+<span class="kw">INSERT INTO</span> daily_sales <span class="kw">VALUES</span>
+(<span class="str">'2026-06-01'</span>,1000),(<span class="str">'2026-06-02'</span>,1500),(<span class="str">'2026-06-03'</span>,800),
+(<span class="str">'2026-06-04'</span>,2000),(<span class="str">'2026-06-05'</span>,1200);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> day, revenue,
+  <span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> day) <span class="kw">AS</span> running_total,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(revenue) <span class="kw">OVER</span> (
+    <span class="kw">ORDER BY</span> day <span class="kw">ROWS BETWEEN</span> 2 <span class="kw">PRECEDING AND CURRENT ROW</span>
+  ), 0) <span class="kw">AS</span> ma_3day
+<span class="kw">FROM</span> daily_sales;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>day</th><th>revenue</th><th>running_total</th><th>ma_3day</th></tr>
+    <tr><td>2026-06-01</td><td>1000</td><td>1000</td><td>1000</td></tr>
+    <tr><td>2026-06-02</td><td>1500</td><td>2500</td><td>1250</td></tr>
+    <tr><td>2026-06-03</td><td>800</td><td>3300</td><td>1100</td></tr>
+    <tr><td>2026-06-04</td><td>2000</td><td>5300</td><td>1433</td></tr>
+    <tr><td>2026-06-05</td><td>1200</td><td>6500</td><td>1333</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Cumulative revenue, account balances over time, burn-down charts</li><li>Day-over-day deltas with <code>LAG()</code>, moving averages for smoothing</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Fetching all rows and looping in Python/JS to accumulate — ships megabytes to compute one column</li><li>Correlated subquery <code>(SELECT SUM(...) WHERE day &lt;= t.day)</code> per row — O(n²), dies past a few thousand rows</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Window frames (<code>ROWS BETWEEN</code>) compute per-row aggregates without collapsing rows. Also great: <code>LAG()/LEAD()</code> for day-over-day deltas, <code>FIRST_VALUE()</code> for baselines. Pushing analytics into the DB avoids shipping raw rows to the app.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Writing <code>OVER (ORDER BY day)</code> without a frame defaults to <code>RANGE</code>, which includes <em>all peer rows with equal sort values</em> — duplicate dates silently inflate your running total. Say <code>ROWS BETWEEN ...</code> explicitly when duplicates are possible. Also: you can’t put a window function in WHERE — wrap it in a subquery/CTE.</div>
+</section>
+
+<!-- ============ 5. Recursive CTE ============ -->
+<section class="uc" id="uc5">
+  <h2><span class="num">05</span>Recursive CTE — org charts, categories, BOMs</h2>
+  <p class="scenario">Scenario: walk an employee → manager tree of any depth in a single query. Works for category trees, folder structures, bill of materials.</p>
+  <div class="analogy"><b>Analogy:</b> Building a family tree: start with the grandparents, keep asking “who are your children?”, and stop when nobody answers. One conversation, any depth.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> org (id <span class="nm">int PRIMARY KEY</span>, name <span class="nm">text</span>, manager_id <span class="nm">int</span>);
+<span class="kw">INSERT INTO</span> org <span class="kw">VALUES</span>
+(1,<span class="str">'CEO'</span>,<span class="kw">NULL</span>),(2,<span class="str">'VP Eng'</span>,1),(3,<span class="str">'VP Sales'</span>,1),
+(4,<span class="str">'Eng Mgr'</span>,2),(5,<span class="str">'Dev A'</span>,4),(6,<span class="str">'Dev B'</span>,4);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">WITH RECURSIVE</span> tree <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id, name, manager_id, 0 <span class="kw">AS</span> depth, name::<span class="nm">text</span> <span class="kw">AS</span> path
+  <span class="kw">FROM</span> org <span class="kw">WHERE</span> manager_id <span class="kw">IS NULL</span>
+  <span class="kw">UNION ALL</span>
+  <span class="kw">SELECT</span> o.id, o.name, o.manager_id, t.depth + 1, t.path || <span class="str">' → '</span> || o.name
+  <span class="kw">FROM</span> org o <span class="kw">JOIN</span> tree t <span class="kw">ON</span> o.manager_id = t.id
+)
+<span class="kw">SELECT</span> depth, path <span class="kw">FROM</span> tree <span class="kw">ORDER BY</span> path;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>depth</th><th>path</th></tr>
+    <tr><td>0</td><td>CEO</td></tr>
+    <tr><td>1</td><td>CEO → VP Eng</td></tr>
+    <tr><td>2</td><td>CEO → VP Eng → Eng Mgr</td></tr>
+    <tr><td>3</td><td>CEO → VP Eng → Eng Mgr → Dev A</td></tr>
+    <tr><td>3</td><td>CEO → VP Eng → Eng Mgr → Dev B</td></tr>
+    <tr><td>1</td><td>CEO → VP Sales</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Org charts, category trees, folder hierarchies, bill-of-materials</li><li>Graph walks: “everything reachable from X”, dependency chains</li><li>Always with a depth cap or CYCLE clause</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>One query per level in app code — round-trips scale with tree depth</li><li>Hardcoded 5-way self-join <code>a JOIN b JOIN c...</code> — silently truncates level 6</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> One round-trip regardless of tree depth — replaces N+1 recursive app queries. The anchor selects the roots; the recursive member joins children on each iteration. Track <code>depth</code> to cap runaway recursion. For huge, frequently-read trees consider the <code>ltree</code> extension.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Cyclic data (A manages B, B manages A) makes the recursion loop forever. Why wrong: <code>UNION ALL</code> never de-duplicates, so it revisits nodes endlessly. Fix: cap with <code>WHERE depth &lt; 20</code>, or use the <code>CYCLE</code> clause (PG 14+).</div>
+</section>
+
+<!-- ============ 6. LATERAL ============ -->
+<section class="uc" id="uc6">
+  <h2><span class="num">06</span>LATERAL join — "for each row, run a subquery"</h2>
+  <p class="scenario">Scenario: for every customer, fetch their 2 most recent orders. LATERAL is a correlated subquery that can return multiple rows and columns.</p>
+  <div class="analogy"><b>Analogy:</b> A personal shopper per customer: for each customer in your list, dash into the orders store, grab exactly their 2 newest orders, come back. The dash is a tiny index lookup, not a full store search.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> customers (id <span class="nm">int PRIMARY KEY</span>, name <span class="nm">text</span>);
+<span class="kw">CREATE TABLE</span> orders (id <span class="nm">int</span>, customer_id <span class="nm">int</span>, total <span class="nm">numeric</span>, placed_at <span class="nm">date</span>);
+<span class="kw">INSERT INTO</span> customers <span class="kw">VALUES</span> (1,<span class="str">'Acme'</span>),(2,<span class="str">'Globex'</span>);
+<span class="kw">INSERT INTO</span> orders <span class="kw">VALUES</span>
+(10,1,500,<span class="str">'2026-06-01'</span>),(11,1,900,<span class="str">'2026-06-20'</span>),(12,1,300,<span class="str">'2026-05-10'</span>),
+(13,2,1200,<span class="str">'2026-06-15'</span>);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> c.name, o.id <span class="kw">AS</span> order_id, o.total, o.placed_at
+<span class="kw">FROM</span> customers c
+<span class="kw">CROSS JOIN LATERAL</span> (
+  <span class="kw">SELECT</span> id, total, placed_at
+  <span class="kw">FROM</span> orders
+  <span class="kw">WHERE</span> customer_id = c.id
+  <span class="kw">ORDER BY</span> placed_at <span class="kw">DESC LIMIT</span> 2
+) o;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>name</th><th>order_id</th><th>total</th><th>placed_at</th></tr>
+    <tr><td>Acme</td><td>11</td><td>900</td><td>2026-06-20</td></tr>
+    <tr><td>Acme</td><td>10</td><td>500</td><td>2026-06-01</td></tr>
+    <tr><td>Globex</td><td>13</td><td>1200</td><td>2026-06-15</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>“Latest N children per parent” when the parent list is small (a page of customers)</li><li>Calling a set-returning function per row: <code>CROSS JOIN LATERAL jsonb_array_elements(...)</code></li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>CROSS JOIN LATERAL</code> when parents may have zero children — rows vanish; use <code>LEFT JOIN LATERAL ... ON true</code></li><li>LATERAL over the entire 10M-customer table — the window-function form (#03) scans once instead of 10M index dips</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> With an index on <code>(customer_id, placed_at DESC)</code> this does a tiny index scan per customer — often far faster than the window-function approach on big tables when the outer set is small. Use <code>LEFT JOIN LATERAL ... ON true</code> to keep customers with zero orders.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>CROSS JOIN LATERAL</code> silently <em>drops</em> customers with zero orders — your “all customers” report loses rows and nobody notices. Fix: <code>LEFT JOIN LATERAL (...) o ON true</code> keeps them with NULLs.</div>
+</section>
+
+<!-- ============ 7. Full-text search ============ -->
+<section class="uc" id="uc7">
+  <h2><span class="num">07</span>Full-text search — no Elasticsearch needed</h2>
+  <p class="scenario">Scenario: search articles with stemming ("running" matches "run"), ranking, and an index — built into Postgres.</p>
+  <div class="analogy"><b>Analogy:</b> A trained librarian, not a string matcher: she knows “running”, “ran” and “runs” are the same word, ignores “the” and “of”, and hands you the most relevant book first.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> articles (
+  id    <span class="nm">int PRIMARY KEY</span>,
+  title <span class="nm">text</span>,
+  body  <span class="nm">text</span>,
+  tsv   <span class="nm">tsvector</span> <span class="kw">GENERATED ALWAYS AS</span> (
+    <span class="fn">setweight</span>(<span class="fn">to_tsvector</span>(<span class="str">'english'</span>, title), <span class="str">'A'</span>) ||
+    <span class="fn">setweight</span>(<span class="fn">to_tsvector</span>(<span class="str">'english'</span>, body),  <span class="str">'B'</span>)
+  ) <span class="kw">STORED</span>
+);
+<span class="kw">CREATE INDEX</span> idx_articles_tsv <span class="kw">ON</span> articles <span class="kw">USING</span> <span class="fn">gin</span>(tsv);
+
+<span class="kw">INSERT INTO</span> articles <span class="kw">VALUES</span>
+(1,<span class="str">'Index tuning guide'</span>,<span class="str">'How indexes speed up queries'</span>,<span class="kw">DEFAULT</span>),
+(2,<span class="str">'Vacuum internals'</span>,<span class="str">'Why vacuuming keeps tables fast'</span>,<span class="kw">DEFAULT</span>),
+(3,<span class="str">'Query speed tips'</span>,<span class="str">'Indexing strategies for speedy queries'</span>,<span class="kw">DEFAULT</span>);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> id, title, <span class="fn">ts_rank</span>(tsv, q) <span class="kw">AS</span> rank
+<span class="kw">FROM</span> articles, <span class="fn">websearch_to_tsquery</span>(<span class="str">'english'</span>, <span class="str">'index speed'</span>) q
+<span class="kw">WHERE</span> tsv @@ q
+<span class="kw">ORDER BY</span> rank <span class="kw">DESC</span>;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>id</th><th>title</th><th>rank</th></tr>
+    <tr><td>3</td><td>Query speed tips</td><td>0.9524</td></tr>
+    <tr><td>1</td><td>Index tuning guide</td><td>0.6079</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Product/article/document search with ranking and stemming</li><li>Weighted fields: title matches beat body matches (<code>setweight</code>)</li><li><code>websearch_to_tsquery</code> for anything typed by users</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>ILIKE '%term%'</code> on large tables — leading wildcard = full scan every search</li><li>Reaching for Elasticsearch before trying built-in FTS — a second system to deploy, sync, and secure</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Stemming, stop-words, weighted fields (title &gt; body), ranking — all transactionally consistent with your data, zero sync pipelines. <code>websearch_to_tsquery</code> accepts Google-style input safely. For fuzzy/typo matching add the <code>pg_trgm</code> extension with a GIN trigram index on <code>ILIKE '%term%'</code>.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Never feed raw user input to <code>to_tsquery()</code> — characters like <code>&amp;</code> or <code>!</code> make it throw syntax errors (a user typing “fish &amp; chips” breaks your search). <code>websearch_to_tsquery()</code> exists precisely because it accepts anything safely. Also: querying without the <code>tsv</code> column (<code>to_tsvector(body) @@ ...</code>) works but can’t use the index unless the index is on that same expression.</div>
+</section>
+
+<h3 class="cat">Indexing &amp; Performance</h3>
+
+<!-- ============ 8. Partial index ============ -->
+<section class="uc" id="uc8">
+  <h2><span class="num">08</span>Partial indexes — index only what you query</h2>
+  <p class="scenario">Scenario: 50M orders, 99% are 'completed', your app only ever polls the pending ones. Index just those.</p>
+  <div class="analogy"><b>Analogy:</b> Indexing only the “URGENT” tray instead of the entire archive room. The tray index stays tiny, and filing completed paperwork never touches it.</div>
+  <div class="label">Setup + Query</div>
+  <pre><code><span class="kw">CREATE INDEX</span> idx_orders_pending <span class="kw">ON</span> orders (created_at)
+<span class="kw">WHERE</span> status = <span class="str">'pending'</span>;   <span class="cm">-- indexes ~1% of rows</span>
+
+<span class="kw">SELECT</span> id, created_at <span class="kw">FROM</span> orders
+<span class="kw">WHERE</span> status = <span class="str">'pending'</span> <span class="kw">ORDER BY</span> created_at <span class="kw">LIMIT</span> 10;</code></pre>
+  <div class="label">Output (EXPLAIN excerpt)</div>
+  <table class="out">
+    <tr><th>QUERY PLAN</th></tr>
+    <tr><td>Limit (cost=0.14..8.32 rows=10)</td></tr>
+    <tr><td>&nbsp;&nbsp;-&gt; Index Scan using idx_orders_pending on orders (actual time=0.021..0.045)</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Hot small subsets: <code>WHERE status='pending'</code>, <code>WHERE deleted_at IS NULL</code></li><li>Conditional uniqueness: one active subscription per user</li><li>Queue-polling queries that must stay fast at any table size</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>CREATE INDEX ON orders(status)</code> for a 4-value column — huge index the planner mostly ignores</li><li>A partial index whose predicate your queries don’t literally imply — it will never be used</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The index is ~100× smaller, fits in RAM, and writes to 'completed' rows never touch it. The query's WHERE clause must match the index predicate for the planner to use it. Classic uses: <code>WHERE deleted_at IS NULL</code>, <code>WHERE processed = false</code>, unenforced-yet uniqueness like <code>CREATE UNIQUE INDEX ... WHERE active</code>.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The planner only uses a partial index if the query’s WHERE <em>provably implies</em> the index predicate. <code>WHERE status = $1</code> with a bind parameter may not qualify — the planner can’t prove $1 = 'pending'. Why wrong: your index exists but silently isn’t used. Check with EXPLAIN using the literal value.</div>
+</section>
+
+<!-- ============ 9. Covering index ============ -->
+<section class="uc" id="uc9">
+  <h2><span class="num">09</span>Covering indexes — Index-Only Scans</h2>
+  <p class="scenario">Scenario: a hot lookup query hitting the table millions of times/day. Put every needed column in the index so Postgres never touches the heap.</p>
+  <div class="analogy"><b>Analogy:</b> The index card already contains the whole answer, so you never walk to the shelf. “Heap Fetches: 0” = zero trips to the shelf.</div>
+  <div class="label">Setup + Query</div>
+  <pre><code><span class="kw">CREATE INDEX</span> idx_users_email_inc <span class="kw">ON</span> users (email) <span class="kw">INCLUDE</span> (full_name, login_count);
+
+<span class="kw">EXPLAIN ANALYZE
+SELECT</span> full_name, login_count <span class="kw">FROM</span> users <span class="kw">WHERE</span> email = <span class="str">'ravi@corp.com'</span>;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>QUERY PLAN</th></tr>
+    <tr><td>Index Only Scan using idx_users_email_inc on users (actual time=0.019..0.020 rows=1)</td></tr>
+    <tr><td>&nbsp;&nbsp;Heap Fetches: 0</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>One ultra-hot lookup powering login/session/profile checks</li><li>Read-heavy tables where the same 2–3 columns always ride along</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>INCLUDE-ing 8 columns “just in case” — every UPDATE now writes a fatter index</li><li>Expecting index-only scans on a heavily-updated, under-vacuumed table — Heap Fetches quietly climb back up</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>Heap Fetches: 0</code> is the win — the answer comes entirely from the index. <code>INCLUDE</code> columns are payload-only: not sorted, not usable for filtering, so the index stays lean vs. a multi-column key. Keep the table well-vacuumed or the visibility map forces heap fetches anyway.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Index-only scans depend on the visibility map: if autovacuum lags, <code>Heap Fetches</code> climbs and your “covering” index quietly degrades to a normal one. Also, every INCLUDE column bloats the index and slows writes — cover your hottest query, not every query.</div>
+</section>
+
+<!-- ============ 10. Keyset pagination ============ -->
+<section class="uc" id="uc10">
+  <h2><span class="num">10</span>Keyset pagination — OFFSET is a trap</h2>
+  <p class="scenario">Scenario: infinite-scroll feed. <code>OFFSET 100000</code> reads and throws away 100k rows every page. Keyset reads only what it returns.</p>
+  <div class="analogy"><b>Analogy:</b> A bookmark vs. counting pages: OFFSET re-counts 100,000 pages from page one every time; keyset opens the book exactly where the bookmark is.</div>
+  <div class="grid2">
+    <div>
+      <div class="label">❌ Slow — degrades with depth</div>
+      <pre><code><span class="kw">SELECT</span> id, title <span class="kw">FROM</span> posts
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>
+<span class="kw">OFFSET</span> 100000 <span class="kw">LIMIT</span> 20;
+<span class="cm">-- 480 ms, scans 100,020 rows</span></code></pre>
+    </div>
+    <div>
+      <div class="label">✅ Fast — constant time at any depth</div>
+      <pre><code><span class="kw">SELECT</span> id, title <span class="kw">FROM</span> posts
+<span class="kw">WHERE</span> (created_at, id) &lt; (<span class="str">'2026-05-01 10:00'</span>, 88231)
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 20;
+<span class="cm">-- 0.4 ms, scans 20 rows</span></code></pre>
+    </div>
+  </div>
+  <div class="label">Output comparison</div>
+  <table class="out">
+    <tr><th>method</th><th>page 1</th><th>page 5,000</th><th>rows scanned @ p5000</th></tr>
+    <tr><td>OFFSET/LIMIT</td><td>0.4 ms</td><td>480 ms</td><td>100,020</td></tr>
+    <tr><td>Keyset (seek)</td><td>0.4 ms</td><td>0.4 ms</td><td>20</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Infinite scroll, mobile feeds, cursor-based REST/GraphQL APIs</li><li>Batch exports that walk a huge table chunk by chunk</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>OFFSET 100000</code> anywhere users can paginate deep</li><li>Paginating on a mutable column like <code>updated_at</code> — rows teleport between pages mid-scroll</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Remember the last row's <code>(created_at, id)</code> as a cursor and seek past it with a row-value comparison — it maps to a single index range scan on <code>(created_at DESC, id DESC)</code>. Always add the unique <code>id</code> tiebreaker or rows can be skipped/duplicated on equal timestamps.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> You can’t jump to “page 500” with keyset — it’s next/previous only. And the cursor columns must be immutable and unique-in-combination: paginate on <code>(updated_at, id)</code> while rows are being updated and entries shift between pages mid-scroll.</div>
+</section>
+
+<h3 class="cat">Concurrency Patterns</h3>
+
+<!-- ============ 11. SKIP LOCKED ============ -->
+<section class="uc" id="uc11">
+  <h2><span class="num">11</span>Job queue — FOR UPDATE SKIP LOCKED</h2>
+  <p class="scenario">Scenario: 20 workers pulling jobs from one table. Without SKIP LOCKED they all fight for the same row; with it, each worker instantly grabs a different job.</p>
+  <div class="analogy"><b>Analogy:</b> A cafeteria with many counters: if the counter you approach is busy (locked), you step to the next free one instead of queueing behind someone. Nobody waits, nobody gets the same tray.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> jobs (
+  id      <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  payload <span class="nm">jsonb</span>,
+  status  <span class="nm">text</span> <span class="kw">DEFAULT</span> <span class="str">'queued'</span>,
+  run_at  <span class="nm">timestamptz</span> <span class="kw">DEFAULT</span> <span class="fn">now</span>()
+);
+<span class="kw">CREATE INDEX ON</span> jobs (run_at) <span class="kw">WHERE</span> status = <span class="str">'queued'</span>;</code></pre>
+  <div class="label">Query — each worker runs this in a transaction</div>
+  <pre><code><span class="kw">UPDATE</span> jobs <span class="kw">SET</span> status = <span class="str">'running'</span>
+<span class="kw">WHERE</span> id = (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> jobs
+  <span class="kw">WHERE</span> status = <span class="str">'queued'</span> <span class="kw">AND</span> run_at &lt;= <span class="fn">now</span>()
+  <span class="kw">ORDER BY</span> run_at
+  <span class="kw">FOR UPDATE SKIP LOCKED</span>
+  <span class="kw">LIMIT</span> 1
+)
+<span class="kw">RETURNING</span> id, payload;</code></pre>
+  <div class="label">Output (worker #3's result while workers 1–2 hold other rows)</div>
+  <table class="out">
+    <tr><th>id</th><th>payload</th></tr>
+    <tr><td>1043</td><td>{"task": "send_email", "to": "blsraut@gmail.com"}</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Background jobs, email sends, webhook dispatch — with transactional enqueue</li><li>Fan-out to N workers with zero lock contention</li><li>Pair with a reaper for jobs stuck in 'running'</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>SELECT</code> a job then <code>UPDATE</code> it without locking — two workers grab the same job and your customer gets two emails</li><li>Plain <code>FOR UPDATE</code> without SKIP LOCKED — 20 workers form a polite single-file queue, throughput of 1</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>SKIP LOCKED</code> skips rows other transactions hold instead of waiting — zero lock contention, perfect work distribution. This one clause is why many teams replace Redis/RabbitMQ with plain Postgres for job queues: you get transactional enqueue (job commits atomically with the business change that created it).</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> If a worker crashes after grabbing a job, the row stays <code>'running'</code> forever — SKIP LOCKED released the lock at crash, but your status column still says running. Why wrong: jobs silently vanish. Fix: a reaper query that re-queues stale running jobs (<code>started_at &lt; now() - interval '10 min'</code>), or keep the lock held for the whole job instead of a status column.</div>
+</section>
+
+<!-- ============ 12. DISTINCT ON ============ -->
+<section class="uc" id="uc12">
+  <h2><span class="num">12</span>DISTINCT ON — latest row per key</h2>
+  <p class="scenario">Scenario: sensor readings table — get the most recent reading per device. Postgres-only syntax, wonderfully terse.</p>
+  <div class="analogy"><b>Analogy:</b> From a pile of photos of many people, keep only the newest photo of each person: sort by person, newest on top, take the top one per person.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> readings (device_id <span class="nm">int</span>, temp <span class="nm">numeric</span>, at <span class="nm">timestamptz</span>);
+<span class="kw">INSERT INTO</span> readings <span class="kw">VALUES</span>
+(1, 21.5, <span class="str">'2026-07-03 09:00'</span>),(1, 22.1, <span class="str">'2026-07-03 10:00'</span>),
+(2, 30.0, <span class="str">'2026-07-03 09:30'</span>),(2, 29.4, <span class="str">'2026-07-03 09:45'</span>);</code></pre>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT DISTINCT ON</span> (device_id)
+       device_id, temp, at
+<span class="kw">FROM</span> readings
+<span class="kw">ORDER BY</span> device_id, at <span class="kw">DESC</span>;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>device_id</th><th>temp</th><th>at</th></tr>
+    <tr><td>1</td><td>22.1</td><td>2026-07-03 10:00:00+00</td></tr>
+    <tr><td>2</td><td>29.4</td><td>2026-07-03 09:45:00+00</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Latest reading per device, current status per shipment, newest version per document</li><li>Backed by an index on <code>(key, sort_col DESC)</code></li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>GROUP BY device_id + MAX(at)</code> joined back to get the row — extra scan, and duplicate rows on timestamp ties</li><li>DISTINCT ON when you need portable SQL — it’s Postgres-only; use the #03 pattern for portability</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Keeps the <em>first</em> row per group according to ORDER BY — so sort by key, then recency DESC. Simpler and often faster than the ROW_NUMBER approach for "latest per entity". Back it with an index on <code>(device_id, at DESC)</code>.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The ORDER BY <em>must</em> start with the DISTINCT ON expressions (<code>ORDER BY device_id, at DESC</code>) — anything else is a syntax error. And if you want final output sorted by <code>temp</code>, you need an outer query; bolting it onto this ORDER BY breaks the “latest per device” logic.</div>
+</section>
+
+<h3 class="cat">Reporting Tricks</h3>
+
+<!-- ============ 13. FILTER ============ -->
+<section class="uc" id="uc13">
+  <h2><span class="num">13</span>FILTER clause — pivot tables in one pass</h2>
+  <p class="scenario">Scenario: one row per month with signups split by plan — a pivot report without CASE WHEN soup.</p>
+  <div class="analogy"><b>Analogy:</b> Sorting mail into labeled pigeonholes in a single pass down the stack — one walk, every envelope counted into its slot, instead of re-walking the stack once per slot.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> <span class="fn">date_trunc</span>(<span class="str">'month'</span>, created_at)::<span class="nm">date</span> <span class="kw">AS</span> month,
+  <span class="fn">COUNT</span>(*)                                    <span class="kw">AS</span> total,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> plan = <span class="str">'free'</span>)     <span class="kw">AS</span> free,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> plan = <span class="str">'pro'</span>)      <span class="kw">AS</span> pro,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> plan = <span class="str">'enterprise'</span>) <span class="kw">AS</span> ent
+<span class="kw">FROM</span> signups
+<span class="kw">GROUP BY</span> 1 <span class="kw">ORDER BY</span> 1;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>month</th><th>total</th><th>free</th><th>pro</th><th>ent</th></tr>
+    <tr><td>2026-05-01</td><td>420</td><td>301</td><td>98</td><td>21</td></tr>
+    <tr><td>2026-06-01</td><td>515</td><td>340</td><td>142</td><td>33</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Pivot-style reports: signups by plan, errors by severity, sales by region — one scan</li><li>Mixed aggregates: <code>AVG(amount) FILTER (WHERE refunded)</code> next to overall totals</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>One query per category merged in app code — N scans of the same table</li><li>Nested <code>SUM(CASE WHEN...)</code> pyramids — works, but reviewers need a map and a flashlight</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>agg() FILTER (WHERE ...)</code> is SQL-standard, reads cleanly, and works with any aggregate — <code>SUM</code>, <code>AVG</code>, <code>ARRAY_AGG</code>. One table scan produces the whole pivot. Cleaner than <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> and the intent is obvious to reviewers.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>AVG(x) FILTER (WHERE plan='pro')</code> averages <em>only</em> matching rows — it is not “treat others as zero”. <code>SUM(CASE WHEN plan='pro' THEN amount ELSE 0 END)/COUNT(*)</code> answers a different question. Pick the semantics you actually mean; mixing them up skews every ratio on the dashboard.</div>
+</section>
+
+<!-- ============ 14. generate_series ============ -->
+<section class="uc" id="uc14">
+  <h2><span class="num">14</span>generate_series — fill gaps in time series</h2>
+  <p class="scenario">Scenario: chart shows daily orders, but days with zero orders vanish from GROUP BY output. Generate the calendar, then LEFT JOIN.</p>
+  <div class="analogy"><b>Analogy:</b> Print the blank calendar first, then write sales onto it. Days with no sales stay visible as empty squares — GROUP BY alone would tear those pages out.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">SELECT</span> d::<span class="nm">date</span> <span class="kw">AS</span> day, <span class="fn">COALESCE</span>(<span class="fn">COUNT</span>(o.id), 0) <span class="kw">AS</span> orders
+<span class="kw">FROM</span> <span class="fn">generate_series</span>(<span class="str">'2026-06-28'</span>::<span class="nm">date</span>, <span class="str">'2026-07-02'</span>::<span class="nm">date</span>, <span class="str">'1 day'</span>) d
+<span class="kw">LEFT JOIN</span> orders o <span class="kw">ON</span> o.placed_at::<span class="nm">date</span> = d
+<span class="kw">GROUP BY</span> d <span class="kw">ORDER BY</span> d;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>day</th><th>orders</th></tr>
+    <tr><td>2026-06-28</td><td>14</td></tr>
+    <tr><td>2026-06-29</td><td>0</td></tr>
+    <tr><td>2026-06-30</td><td>22</td></tr>
+    <tr><td>2026-07-01</td><td>0</td></tr>
+    <tr><td>2026-07-02</td><td>31</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Time-series charts where every day/hour must appear, even empty ones</li><li>Generating test data: <code>INSERT ... SELECT ... FROM generate_series(1, 1e6)</code></li><li>Calendar spines for cohort and retention reports</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Filling missing dates in application code after the query</li><li>Joining on <code>o.placed_at::date = d</code> — the cast kills index use; join on a half-open range instead</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>generate_series</code> works with ints, dates, and timestamps — instant calendar/spine tables for reports, test data (<code>INSERT ... SELECT ... FROM generate_series(1, 1000000)</code>), and bucketing. The zero-rows problem disappears and charts stop lying.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Joining on <code>o.placed_at::date = d</code> wraps the column in a cast, so a plain index on <code>placed_at</code> is unusable — the join becomes a scan per day. Fix: range join <code>o.placed_at &gt;= d AND o.placed_at &lt; d + interval '1 day'</code>, which is index-friendly (and correct across time zones).</div>
+</section>
+
+<h3 class="cat">Scale &amp; Architecture</h3>
+
+<!-- ============ 15. Partitioning ============ -->
+<section class="uc" id="uc15">
+  <h2><span class="num">15</span>Declarative partitioning — big tables, small pain</h2>
+  <p class="scenario">Scenario: events table growing 50M rows/month. Partition by month: queries prune to one partition, old data drops instantly.</p>
+  <div class="analogy"><b>Analogy:</b> Monthly binders instead of one 10,000-page folder: June’s question opens only June’s binder, and old months are shredded whole (DROP) instead of tearing out pages one by one (DELETE).</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> events (
+  id   <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY</span>,
+  type <span class="nm">text</span>,
+  at   <span class="nm">timestamptz NOT NULL</span>
+) <span class="kw">PARTITION BY RANGE</span> (at);
+
+<span class="kw">CREATE TABLE</span> events_2026_06 <span class="kw">PARTITION OF</span> events
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-06-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-07-01'</span>);
+<span class="kw">CREATE TABLE</span> events_2026_07 <span class="kw">PARTITION OF</span> events
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-07-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-08-01'</span>);</code></pre>
+  <div class="label">Query + plan showing partition pruning</div>
+  <pre><code><span class="kw">EXPLAIN SELECT</span> <span class="fn">count</span>(*) <span class="kw">FROM</span> events <span class="kw">WHERE</span> at &gt;= <span class="str">'2026-07-01'</span>;</code></pre>
+  <table class="out">
+    <tr><th>QUERY PLAN</th></tr>
+    <tr><td>Aggregate</td></tr>
+    <tr><td>&nbsp;&nbsp;-&gt; Seq Scan on events_2026_07 events  <span style="color:var(--green)">← only 1 of 2 partitions scanned</span></td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Append-mostly time-series past ~100M rows: events, logs, metrics</li><li>Retention policies: <code>DROP</code> old partitions instantly</li><li>Automate partition creation with pg_partman</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Partitioning a 2M-row table because it sounds professional — pure overhead, zero benefit</li><li>Mass-<code>DELETE</code> for retention on a huge unpartitioned table — days of bloat and vacuum debt</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Partition pruning skips irrelevant data automatically. Retention becomes <code>DROP TABLE events_2026_06</code> — instant, no bloat, no giant DELETE. Vacuum and indexes work per-partition (smaller, faster). Rule of thumb: consider partitioning past ~100M rows or when you need time-based retention. Use <code>pg_partman</code> to auto-create partitions.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Every PRIMARY KEY / UNIQUE constraint must include the partition key — you cannot have a global unique <code>id</code> across partitions. And inserting a row with no matching partition fails outright: create partitions ahead of time (pg_partman) or a DEFAULT partition as a safety net.</div>
+</section>
+
+<!-- ============ 16. Materialized views ============ -->
+<section class="uc" id="uc16">
+  <h2><span class="num">16</span>Materialized views — precomputed dashboards</h2>
+  <p class="scenario">Scenario: a revenue-summary query joins 5 tables and takes 30s. The dashboard hits it every page load. Compute once, read instantly.</p>
+  <div class="analogy"><b>Analogy:</b> Sunday meal prep: cook the expensive dish once, reheat portions all week. REFRESH is the next cooking session; between sessions everyone eats leftovers — fast, slightly less fresh.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE MATERIALIZED VIEW</span> mv_monthly_revenue <span class="kw">AS</span>
+<span class="kw">SELECT</span> <span class="fn">date_trunc</span>(<span class="str">'month'</span>, placed_at)::<span class="nm">date</span> <span class="kw">AS</span> month,
+       <span class="fn">SUM</span>(total) <span class="kw">AS</span> revenue, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> orders
+<span class="kw">FROM</span> orders <span class="kw">GROUP BY</span> 1;
+
+<span class="kw">CREATE UNIQUE INDEX ON</span> mv_monthly_revenue (month);
+
+<span class="cm">-- refresh without blocking readers (needs the unique index):</span>
+<span class="kw">REFRESH MATERIALIZED VIEW CONCURRENTLY</span> mv_monthly_revenue;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>month</th><th>revenue</th><th>orders</th></tr>
+    <tr><td>2026-05-01</td><td>1,284,300</td><td>8,911</td></tr>
+    <tr><td>2026-06-01</td><td>1,502,750</td><td>10,204</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Expensive multi-join dashboards refreshed every N minutes</li><li>Pre-aggregated rollups that BI tools hammer</li><li>Always with a unique index so CONCURRENTLY works</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Matviews for live numbers — inventory, balances, anything money-adjacent</li><li>Non-concurrent REFRESH at peak hours — every dashboard query blocks for the full rebuild</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Dashboard reads drop from 30s to sub-millisecond index hits. Schedule the refresh (cron / pg_cron) at whatever staleness the business tolerates. <code>CONCURRENTLY</code> keeps the view queryable during refresh. It's a cache the database keeps honest — you can index it like any table.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>REFRESH MATERIALIZED VIEW</code> without CONCURRENTLY takes an exclusive lock — every dashboard query blocks until the 30s rebuild finishes; with CONCURRENTLY it needs a unique index and roughly doubles the work. Also the data is stale between refreshes — wrong tool for “must be current” numbers like inventory.</div>
+</section>
+
+<!-- ============ 17. RLS ============ -->
+<section class="uc" id="uc17">
+  <h2><span class="num">17</span>Row-Level Security — multi-tenancy in the DB</h2>
+  <p class="scenario">Scenario: SaaS app, many tenants in one table. One forgotten <code>WHERE tenant_id = ?</code> in app code leaks data across customers. RLS makes leaks impossible.</p>
+  <div class="analogy"><b>Analogy:</b> Hotel keycards: every guest’s card only opens their own room. Even if a confused guest (buggy app code) tries every door in the corridor, the locks — not the guest’s memory — enforce the rule.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">ALTER TABLE</span> invoices <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="kw">CREATE POLICY</span> tenant_isolation <span class="kw">ON</span> invoices
+  <span class="kw">USING</span> (tenant_id = <span class="fn">current_setting</span>(<span class="str">'app.tenant_id'</span>)::<span class="nm">int</span>);
+
+<span class="cm">-- app sets tenant per connection/transaction:</span>
+<span class="kw">SET</span> app.tenant_id = <span class="str">'7'</span>;</code></pre>
+  <div class="label">Query &amp; output — same SQL, tenant 7 sees only its rows</div>
+  <pre><code><span class="kw">SELECT</span> id, tenant_id, amount <span class="kw">FROM</span> invoices; <span class="cm">-- no WHERE clause!</span></code></pre>
+  <table class="out">
+    <tr><th>id</th><th>tenant_id</th><th>amount</th></tr>
+    <tr><td>301</td><td>7</td><td>4,500</td></tr>
+    <tr><td>317</td><td>7</td><td>1,200</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Multi-tenant SaaS: tenant isolation the app cannot forget</li><li>Compliance boundaries: support staff see only their region’s rows</li><li>Defense in depth even when the ORM also filters</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Trusting every developer to append <code>WHERE tenant_id = ?</code> forever — one code review miss is a data breach</li><li>Testing RLS while connected as superuser/owner — policies silently don’t apply and everything “works”</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The filter is enforced by the database on every SELECT/UPDATE/DELETE — app bugs can't bypass it. Policies compose with roles for read-only vs admin access. This is the backbone of Supabase-style architectures.</div>
+  <div class="warn"><b>Veteran tip:</b> Table owners and superusers bypass RLS by default — run the app as a non-owner role, and add <code>FORCE ROW LEVEL SECURITY</code> if the owner connects too.</div>
+</section>
+
+<h3 class="cat">Schema Design Power Tools</h3>
+
+<!-- ============ 18. Arrays ============ -->
+<section class="uc" id="uc18">
+  <h2><span class="num">18</span>Arrays + unnest — tags without a join table</h2>
+  <p class="scenario">Scenario: posts have tags. For simple cases an array column with a GIN index beats a three-table many-to-many.</p>
+  <div class="analogy"><b>Analogy:</b> Sticky labels written on the folder itself instead of a separate label registry — quicker to read and search, but the labels can’t carry their own paperwork.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> posts (id <span class="nm">int PRIMARY KEY</span>, title <span class="nm">text</span>, tags <span class="nm">text[]</span>);
+<span class="kw">CREATE INDEX ON</span> posts <span class="kw">USING</span> <span class="fn">gin</span>(tags);
+<span class="kw">INSERT INTO</span> posts <span class="kw">VALUES</span>
+(1,<span class="str">'Tuning autovacuum'</span>, <span class="str">'{postgres,performance}'</span>),
+(2,<span class="str">'Intro to JSONB'</span>,    <span class="str">'{postgres,json}'</span>),
+(3,<span class="str">'React hooks'</span>,       <span class="str">'{javascript,react}'</span>);</code></pre>
+  <div class="label">Query — contains, and tag frequency via unnest</div>
+  <pre><code><span class="kw">SELECT</span> title <span class="kw">FROM</span> posts <span class="kw">WHERE</span> tags @&gt; <span class="str">'{postgres}'</span>;
+
+<span class="kw">SELECT</span> tag, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> posts, <span class="fn">unnest</span>(tags) tag
+<span class="kw">GROUP BY</span> tag <span class="kw">ORDER BY</span> 2 <span class="kw">DESC</span>;</code></pre>
+  <div class="label">Output (second query)</div>
+  <table class="out">
+    <tr><th>tag</th><th>count</th></tr>
+    <tr><td>postgres</td><td>2</td></tr>
+    <tr><td>performance</td><td>1</td></tr>
+    <tr><td>json</td><td>1</td></tr>
+    <tr><td>javascript</td><td>1</td></tr>
+    <tr><td>react</td><td>1</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Simple labels: tags, feature flags, category codes — plus GIN for <code>@&gt;</code></li><li>Small bounded lists that live and die with the row</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Comma-separated strings <code>'a,b,c'</code> — LIKE-parsing hell, no index, no types</li><li>Arrays when tags need their own metadata, counts, or foreign keys — that’s a join table’s job</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> GIN-indexed <code>@&gt;</code> (contains) and <code>&amp;&amp;</code> (overlaps) queries are fast; <code>unnest()</code> flattens arrays back to rows whenever you need relational operations. Great fit when tags have no metadata of their own. The moment tags need attributes (color, owner, counts) — graduate to a proper join table.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> No foreign keys into array elements — typo’d tag <code>'postgers'</code> lives forever with zero referential integrity. And updating one tag rewrites the whole row (MVCC), so hot, frequently-edited arrays bloat the table. Tags with metadata or heavy churn → join table.</div>
+</section>
+
+<!-- ============ 19. Generated columns ============ -->
+<section class="uc" id="uc19">
+  <h2><span class="num">19</span>Generated columns — computed, stored, indexable</h2>
+  <p class="scenario">Scenario: you always search users by lowercased email and report on order line totals. Let the DB maintain the derived values.</p>
+  <div class="analogy"><b>Analogy:</b> A spreadsheet formula cell: it always recalculates from its inputs and nobody can type over it with a lie.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> line_items (
+  qty        <span class="nm">int NOT NULL</span>,
+  unit_price <span class="nm">numeric NOT NULL</span>,
+  total      <span class="nm">numeric</span> <span class="kw">GENERATED ALWAYS AS</span> (qty * unit_price) <span class="kw">STORED</span>
+);
+<span class="kw">INSERT INTO</span> line_items (qty, unit_price) <span class="kw">VALUES</span> (3, 199.99), (2, 49.50);</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>qty</th><th>unit_price</th><th>total</th></tr>
+    <tr><td>3</td><td>199.99</td><td>599.97</td></tr>
+    <tr><td>2</td><td>49.50</td><td>99.00</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Derived values you filter or index: line totals, normalized emails, extracted JSONB fields</li><li>Keeping tsvector search columns in sync automatically (#07)</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Maintaining computed columns from app code — three services write the table, one forgets, data drifts</li><li>A trigger to do what a generated column does declaratively — more code, more failure modes</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The value can never drift out of sync with its inputs — the DB recomputes on every write, and you can index it. Related trick: expression indexes (<code>CREATE INDEX ON users (lower(email))</code>) make <code>WHERE lower(email) = ...</code> an index scan with no extra column at all.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The expression must be IMMUTABLE — <code>now()</code>, <code>random()</code>, or referencing another generated column all fail. And since the value is STORED, adding one to a huge table rewrites the entire table — plan that migration off-peak.</div>
+</section>
+
+<!-- ============ 20. Audit triggers ============ -->
+<section class="uc" id="uc20">
+  <h2><span class="num">20</span>Audit log — triggers that never forget</h2>
+  <p class="scenario">Scenario: compliance asks "who changed this price and when?" A trigger writes every change to an append-only audit table, regardless of which app made the change.</p>
+  <div class="analogy"><b>Analogy:</b> CCTV on the vault door: it records every change no matter who made it or which door they used — and the tape is glued to the transaction, so a rolled-back change leaves no phantom footage.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> audit_log (
+  id       <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  tbl      <span class="nm">text</span>, op <span class="nm">text</span>,
+  old_row  <span class="nm">jsonb</span>, new_row <span class="nm">jsonb</span>,
+  by_user  <span class="nm">text</span> <span class="kw">DEFAULT</span> <span class="fn">current_user</span>,
+  at       <span class="nm">timestamptz</span> <span class="kw">DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="kw">CREATE FUNCTION</span> <span class="fn">audit_trg</span>() <span class="kw">RETURNS</span> <span class="nm">trigger</span> <span class="kw">AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">INSERT INTO</span> audit_log (tbl, op, old_row, new_row)
+  <span class="kw">VALUES</span> (TG_TABLE_NAME, TG_OP, <span class="fn">to_jsonb</span>(OLD), <span class="fn">to_jsonb</span>(NEW));
+  <span class="kw">RETURN NEW</span>;
+<span class="kw">END</span> $$ <span class="kw">LANGUAGE</span> plpgsql;
+
+<span class="kw">CREATE TRIGGER</span> products_audit
+<span class="kw">AFTER UPDATE OR DELETE ON</span> products
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">audit_trg</span>();</code></pre>
+  <div class="label">Output — after UPDATE products SET price = 899 WHERE id = 5</div>
+  <table class="out">
+    <tr><th>tbl</th><th>op</th><th>old_row → new_row</th><th>by_user</th><th>at</th></tr>
+    <tr><td>products</td><td>UPDATE</td><td>{"price": 999} → {"price": 899}</td><td>app_rw</td><td>2026-07-03 11:02</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Compliance audit trails: who changed what, when, from old → new</li><li>One generic <code>to_jsonb</code> trigger reused across all audited tables</li><li>Debugging “how did this row end up like this?”</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>App-layer audit logging — misses psql fixes, cron jobs, other services; and logs changes that later roll back</li><li>Heavy audit triggers on your hottest write path — use logical decoding/CDC there</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Runs in the same transaction as the change — audit and data commit or roll back together, and nothing (psql, cron, another service) can bypass it. <code>to_jsonb(OLD/NEW)</code> means one generic trigger serves every table. For heavy write loads consider logical decoding (CDC) instead to keep triggers off the hot path.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The trigger runs inside every write — a slow or buggy trigger function makes <em>every UPDATE on products</em> slow or failing. Why wrong: your audit feature just became a production outage. Keep trigger bodies trivial (one INSERT), and load-test; for very hot tables prefer CDC/logical decoding.</div>
+</section>
+
+<h3 class="cat">Observability &amp; Tuning</h3>
+
+<!-- ============ 21. EXPLAIN ANALYZE ============ -->
+<section class="uc" id="uc21">
+  <h2><span class="num">21</span>EXPLAIN ANALYZE — read plans like a pro</h2>
+  <p class="scenario">Scenario: a query is slow. Before touching anything, see what the planner actually did — estimated vs actual rows is where the truth lives.</p>
+  <div class="analogy"><b>Analogy:</b> A GPS trip report: the planner’s estimated route vs. the road actually driven. When “estimated 1 turn” becomes “actually 3,100 turns”, the map (statistics) is stale.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE, BUFFERS</span>)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders <span class="kw">WHERE</span> customer_id = 42 <span class="kw">AND</span> status = <span class="str">'shipped'</span>;</code></pre>
+  <div class="label">Output — before and after adding the right index</div>
+  <table class="out">
+    <tr><th>plan (before)</th></tr>
+    <tr><td>Seq Scan on orders (cost=0.00..189234 rows=1 width=88) (actual time=812.4..812.5 <b>rows=3100</b>)</td></tr>
+    <tr><td>&nbsp;&nbsp;Filter: (customer_id = 42 AND status = 'shipped'); Rows Removed by Filter: 4,996,900</td></tr>
+    <tr><td>&nbsp;&nbsp;Buffers: shared read=98211 · Execution Time: <span style="color:var(--red)">812.6 ms</span></td></tr>
+  </table>
+  <pre><code><span class="kw">CREATE INDEX ON</span> orders (customer_id, status);
+<span class="kw">ANALYZE</span> orders;  <span class="cm">-- refresh planner statistics</span></code></pre>
+  <table class="out">
+    <tr><th>plan (after)</th></tr>
+    <tr><td>Index Scan using orders_customer_id_status_idx (actual time=0.03..1.9 rows=3100)</td></tr>
+    <tr><td>&nbsp;&nbsp;Buffers: shared hit=412 · Execution Time: <span style="color:var(--green)">2.1 ms</span></td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Any query slower than you expect — <em>before</em> touching indexes</li><li>Verifying a new index is actually used, with literal values</li><li>BUFFERS to see cache hits vs disk reads</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Adding indexes by intuition and hoping — measure, change one thing, measure again</li><li><code>EXPLAIN ANALYZE UPDATE ...</code> outside a <code>BEGIN/ROLLBACK</code> — it really executes</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Read plans bottom-up, inner-first. Red flags: <code>rows=1</code> estimated vs <code>rows=3100</code> actual (stale stats → run <code>ANALYZE</code>), huge "Rows Removed by Filter" (missing index), Seq Scan on big tables in point lookups, and <code>BUFFERS read</code> ≫ <code>hit</code> (cold cache / too much I/O). 380× here from one composite index.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>EXPLAIN ANALYZE</code> <em>actually executes</em> the statement — running it on an UPDATE or DELETE changes real data. Wrap it: <code>BEGIN; EXPLAIN ANALYZE UPDATE ...; ROLLBACK;</code>. Plain <code>EXPLAIN</code> (no ANALYZE) is always safe — it only plans.</div>
+</section>
+
+<!-- ============ 22. pg_stat_statements ============ -->
+<section class="uc" id="uc22">
+  <h2><span class="num">22</span>pg_stat_statements — find the real problem queries</h2>
+  <p class="scenario">Scenario: "the database is slow." Don't guess — rank every query shape by total time consumed across all executions.</p>
+  <div class="analogy"><b>Analogy:</b> An itemized phone bill: you feel like “the phone is expensive”, the bill shows exactly which three numbers eat 80% of the budget. Fix those, ignore the rest.</div>
+  <div class="label">Setup + query</div>
+  <pre><code><span class="cm">-- postgresql.conf: shared_preload_libraries = 'pg_stat_statements'</span>
+<span class="kw">CREATE EXTENSION</span> pg_stat_statements;
+
+<span class="kw">SELECT</span> <span class="fn">substring</span>(query, 1, 45) <span class="kw">AS</span> query,
+       calls,
+       <span class="fn">round</span>(total_exec_time::<span class="nm">numeric</span>, 0) <span class="kw">AS</span> total_ms,
+       <span class="fn">round</span>(mean_exec_time::<span class="nm">numeric</span>, 1)  <span class="kw">AS</span> avg_ms
+<span class="kw">FROM</span> pg_stat_statements
+<span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC LIMIT</span> 3;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>query</th><th>calls</th><th>total_ms</th><th>avg_ms</th></tr>
+    <tr><td>SELECT * FROM orders WHERE customer_id = $1</td><td>1,240,551</td><td>9,821,400</td><td>7.9</td></tr>
+    <tr><td>UPDATE carts SET items = $1 WHERE id = $2</td><td>310,922</td><td>2,114,080</td><td>6.8</td></tr>
+    <tr><td>SELECT ... FROM reports_heavy_join ...</td><td>84</td><td>1,932,000</td><td>23,000.0</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Weekly ritual: reset, wait a day, fix the top 3 by total time</li><li>Finding “death by a thousand cuts” — the 8ms query called a million times</li><li>Before/after proof that your optimization worked</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Optimizing the query a developer <em>feels</em> is slow — feelings lose to <code>total_exec_time</code> every time</li><li>Ranking by <code>mean_exec_time</code> alone — surfaces rare 20s reports over the real budget-eaters</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Queries are normalized ($1, $2) so a million variations group into one row. Sort by <code>total_exec_time</code>, not <code>mean</code> — a 8ms query called a million times hurts more than one 23s report. This is the single highest-leverage tuning tool in Postgres: fix the top 3 rows, and the "slow database" is usually cured.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Stats accumulate since the last reset — last month’s batch job still dominates today’s ranking. Call <code>SELECT pg_stat_statements_reset();</code> then measure a representative window. Also <code>total_exec_time</code> excludes network and client time — a “fast” query can still feel slow to users fetching 100k rows.</div>
+</section>
+
+<h3 class="cat">Data Integrity</h3>
+
+<!-- ============ 23. Exclusion constraints ============ -->
+<section class="uc" id="uc23">
+  <h2><span class="num">23</span>Exclusion constraints — no double bookings, ever</h2>
+  <p class="scenario">Scenario: meeting-room booking. App-level overlap checks always race under concurrency. Let the database physically reject overlaps.</p>
+  <div class="analogy"><b>Analogy:</b> A box office that physically cannot print two tickets for the same seat and showtime — no matter how many sales windows are open at once.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE EXTENSION</span> btree_gist;
+
+<span class="kw">CREATE TABLE</span> bookings (
+  room    <span class="nm">int</span>,
+  during  <span class="nm">tstzrange</span>,
+  <span class="kw">EXCLUDE USING</span> <span class="fn">gist</span> (room <span class="kw">WITH</span> =, during <span class="kw">WITH</span> &amp;&amp;)
+);
+
+<span class="kw">INSERT INTO</span> bookings <span class="kw">VALUES</span> (1, <span class="str">'[2026-07-03 10:00, 2026-07-03 11:00)'</span>); <span class="cm">-- OK</span>
+<span class="kw">INSERT INTO</span> bookings <span class="kw">VALUES</span> (1, <span class="str">'[2026-07-03 10:30, 2026-07-03 11:30)'</span>); <span class="cm">-- ?</span></code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>result</th></tr>
+    <tr><td style="color:var(--red)">ERROR: conflicting key value violates exclusion constraint "bookings_room_during_excl"</td></tr>
+    <tr><td>DETAIL: Key (room, during)=(1, ["2026-07-03 10:30","2026-07-03 11:30")) conflicts with existing key</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Bookings, reservations, shift scheduling, seat allocation</li><li>Non-overlapping validity periods for versioned records (price histories)</li><li>Any “no two rows may overlap” business rule</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Check-then-insert in app code — two simultaneous requests both pass the check; congratulations, double booking</li><li>Serializing all bookings through one advisory lock — correctness by traffic jam</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> "Same room AND overlapping time range" is rejected at the storage layer — correct under any concurrency, no app locks needed. Range types (<code>tstzrange</code>, <code>daterange</code>, <code>numrange</code>) + the <code>&amp;&amp;</code> overlap operator handle scheduling, pricing tiers, and versioned records. Also stack CHECK constraints (<code>CHECK (price &gt;= 0)</code>) and foreign keys — constraints are the cheapest bugs you'll never have to fix.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Requires the <code>btree_gist</code> extension for the <code>room WITH =</code> part — without it, cryptic operator-class errors. Mind your range bounds: <code>[10:00, 11:00)</code> half-open ranges make back-to-back bookings legal; use <code>[]</code> inclusive bounds and 10:00–11:00 vs 11:00–12:00 suddenly “overlap”.</div>
+</section>
+
+<!-- ============ 24. Advisory locks ============ -->
+<section class="uc" id="uc24">
+  <h2><span class="num">24</span>Advisory locks — app-level mutexes in the DB</h2>
+  <p class="scenario">Scenario: 5 app servers run the same nightly billing job on cron. Only one should execute. No Zookeeper, no Redis — Postgres is the lock service.</p>
+  <div class="analogy"><b>Analogy:</b> A talking stick for your app servers: only whoever holds it runs the job, and if the holder faints (crashes), the stick drops automatically for someone else to pick up.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="cm">-- each server tries; only one wins (non-blocking):</span>
+<span class="kw">SELECT</span> <span class="fn">pg_try_advisory_lock</span>(<span class="fn">hashtext</span>(<span class="str">'billing-job'</span>)) <span class="kw">AS</span> acquired;
+
+<span class="cm">-- ... do the work if acquired = true, then:</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_unlock</span>(<span class="fn">hashtext</span>(<span class="str">'billing-job'</span>));</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>server</th><th>acquired</th><th>action</th></tr>
+    <tr><td>app-1</td><td>true</td><td>runs the billing job</td></tr>
+    <tr><td>app-2</td><td>false</td><td>skips, exits quietly</td></tr>
+    <tr><td>app-3</td><td>false</td><td>skips, exits quietly</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Cron singletons across N app servers: billing runs, report generation</li><li>“One migration runner at a time” guards</li><li>Coordinating without Redis/Zookeeper when you already have Postgres</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>A <code>locks</code> table with boolean flags — a crashed holder leaves it stuck until a human notices</li><li>Advisory locks for row-level work — that’s what <code>FOR UPDATE</code> and #11 are for</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Locks on an arbitrary number you choose — no table rows involved, so no bloat, no dead tuples. <code>pg_try_*</code> variants return immediately instead of blocking. Session-scoped locks vanish if the holder crashes/disconnects — automatic failure recovery. Also ideal for "one migration runner at a time" and singleton schedulers.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Locks are just numbers — two unrelated features that hash to the same key will block each other mysteriously. Namespace with the two-arg form <code>pg_advisory_lock(feature_id, item_id)</code>. And session-level locks <em>stack</em>: lock twice, you must unlock twice — a retry loop that re-acquires without releasing leaks locks until disconnect.</div>
+</section>
+
+<!-- ============ 25. LISTEN/NOTIFY ============ -->
+<section class="uc" id="uc25">
+  <h2><span class="num">25</span>LISTEN / NOTIFY — pub-sub without a broker</h2>
+  <p class="scenario">Scenario: invalidate app caches or wake up workers the instant a row changes — pushed by the database itself, no polling.</p>
+  <div class="analogy"><b>Analogy:</b> A kitchen bell: the waiter gets pinged the moment the dish is ready instead of walking to the kitchen every 30 seconds to ask. And the bell only rings if the dish actually made it out (commit).</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="cm">-- session A (worker):</span>
+<span class="kw">LISTEN</span> order_events;
+
+<span class="cm">-- trigger publishes on every new order:</span>
+<span class="kw">CREATE FUNCTION</span> <span class="fn">notify_order</span>() <span class="kw">RETURNS</span> <span class="nm">trigger</span> <span class="kw">AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">PERFORM</span> <span class="fn">pg_notify</span>(<span class="str">'order_events'</span>,
+    <span class="fn">json_build_object</span>(<span class="str">'id'</span>, NEW.id, <span class="str">'total'</span>, NEW.total)::<span class="nm">text</span>);
+  <span class="kw">RETURN NEW</span>;
+<span class="kw">END</span> $$ <span class="kw">LANGUAGE</span> plpgsql;
+
+<span class="kw">CREATE TRIGGER</span> t_notify <span class="kw">AFTER INSERT ON</span> orders
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">notify_order</span>();</code></pre>
+  <div class="label">Output — what session A receives when an order is inserted</div>
+  <table class="out">
+    <tr><th>event</th></tr>
+    <tr><td>Asynchronous notification "order_events" with payload "{"id": 5012, "total": 249.00}" received from server process 8841</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Cache invalidation the instant data commits</li><li>Waking workers: NOTIFY is the doorbell, the jobs table (#11) is the truth</li><li>Live UI updates via a websocket bridge</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>NOTIFY as a durable message queue — no listener at that moment means the event never existed</li><li>Fat payloads — send the row ID, let the consumer fetch; 8KB cap and no replay</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Notifications are transactional — sent only if the INSERT commits, so subscribers never see phantom events. Perfect for cache invalidation, live UI updates (via a websocket bridge), and "wake up, there's work" signals paired with the SKIP LOCKED queue (#11). Payloads are fire-and-forget: send the ID, let the consumer fetch details.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> NOTIFY is not a durable queue: if no one is listening at that moment, the message is gone forever. Why wrong as a queue: worker restarts = lost events. Pattern: NOTIFY is only the doorbell — the actual work rows live in a table (#11), and a waking worker always polls the table first. Also breaks behind PgBouncer transaction pooling, and payloads cap at ~8 KB.</div>
+</section>
+
+<h3 class="cat">Operations Essentials</h3>
+
+<!-- ============ 26. COPY ============ -->
+<section class="uc" id="uc26">
+  <h2><span class="num">26</span>COPY — bulk load 100× faster than INSERT</h2>
+  <p class="scenario">Scenario: import a 10M-row CSV. Row-by-row INSERTs take an hour; COPY streams it in minutes.</p>
+  <div class="analogy"><b>Analogy:</b> Moving house with one truck vs. carrying one box per car trip. Same boxes, same distance — the per-trip overhead is what kills you.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="cm">-- server-side file, or from client via \copy in psql:</span>
+\copy sales(sold_at, sku, qty, amount) <span class="kw">FROM</span> <span class="str">'sales.csv'</span> <span class="kw">WITH</span> (<span class="kw">FORMAT</span> csv, <span class="kw">HEADER</span>);
+
+<span class="cm">-- export a query result just as easily:</span>
+\copy (<span class="kw">SELECT</span> * <span class="kw">FROM</span> mv_monthly_revenue) <span class="kw">TO</span> <span class="str">'revenue.csv'</span> <span class="kw">WITH</span> (<span class="kw">FORMAT</span> csv, <span class="kw">HEADER</span>);</code></pre>
+  <div class="label">Output — benchmark, 10M rows</div>
+  <table class="out">
+    <tr><th>method</th><th>time</th><th>relative</th></tr>
+    <tr><td>Single-row INSERTs (autocommit)</td><td>~62 min</td><td>1×</td></tr>
+    <tr><td>Multi-row INSERT (1000/batch)</td><td>~4 min</td><td>15×</td></tr>
+    <tr><td>COPY</td><td>~35 sec</td><td>~106×</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Initial data loads, nightly imports, ETL landing zones</li><li>Stage into an all-<code>text</code> table, then validate/cast with SQL</li><li>Exports: <code>\copy (SELECT ...) TO 'out.csv'</code></li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>ORM <code>save()</code> in a loop for a million rows — hours instead of seconds</li><li>COPY-ing untrusted files straight into production tables — one bad row aborts everything, or worse, succeeds</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> COPY skips per-statement parsing/planning and streams data through one protocol message. Pro moves for big loads: drop or defer indexes and recreate after, load in one transaction, bump <code>maintenance_work_mem</code>, and run <code>ANALYZE</code> when done. Most driver libs expose it (psycopg <code>copy</code>, JDBC CopyManager).</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> COPY is all-or-nothing — one malformed row at line 9,999,999 aborts the entire load. Why wrong: hours lost to a stray comma. Fix: validate first, load in chunks, or stage into an all-<code>text</code> table and cast/clean with SQL afterwards.</div>
+</section>
+
+<!-- ============ 27. Soft delete ============ -->
+<section class="uc" id="uc27">
+  <h2><span class="num">27</span>Soft delete — without breaking uniqueness</h2>
+  <p class="scenario">Scenario: "deleted" users must stay for audit, their emails must be reusable, and active-user queries must stay fast. Partial unique index solves all three.</p>
+  <div class="analogy"><b>Analogy:</b> The archive drawer: closed files leave the desk but not the building. The desk’s “one active file per name” rule ignores the archive, so a returning client can open a fresh file.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">ALTER TABLE</span> users <span class="kw">ADD COLUMN</span> deleted_at <span class="nm">timestamptz</span>;
+
+<span class="cm">-- uniqueness only among the living:</span>
+<span class="kw">CREATE UNIQUE INDEX</span> uq_users_email_active <span class="kw">ON</span> users (email)
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;
+
+<span class="cm">-- "delete":</span>
+<span class="kw">UPDATE</span> users <span class="kw">SET</span> deleted_at = <span class="fn">now</span>() <span class="kw">WHERE</span> id = 42;
+
+<span class="cm">-- same email can register again:</span>
+<span class="kw">INSERT INTO</span> users (email, full_name) <span class="kw">VALUES</span> (<span class="str">'ravi@corp.com'</span>, <span class="str">'Ravi K'</span>); <span class="cm">-- OK ✅</span></code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>id</th><th>email</th><th>deleted_at</th></tr>
+    <tr><td>42</td><td>ravi@corp.com</td><td>2026-07-03 11:30:00+00</td></tr>
+    <tr><td>57</td><td>ravi@corp.com</td><td>NULL</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Recoverable deletion with an “undo” window</li><li>Audit/history requirements where rows must remain queryable</li><li>Partial unique index so emails free up on delete</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>is_deleted boolean</code> + plain <code>UNIQUE(email)</code> — a deleted user blocks that email forever</li><li>Soft-deleting everything by default — GDPR erasure requests need real DELETE, and every query carries the filter tax</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The partial unique index enforces "one <em>active</em> account per email" while history stays intact. Pair with a view (<code>CREATE VIEW active_users AS SELECT ... WHERE deleted_at IS NULL</code>) so app code can't forget the filter, and partial-index your hot queries the same way (#08).</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Every single query — joins, counts, EXISTS subqueries, ORM relations — must remember <code>deleted_at IS NULL</code>; one miss and “deleted” users appear in a report. And foreign keys still point at soft-deleted rows: deleting a user doesn’t cascade-hide their comments. Route all reads through the <code>active_users</code> view, or use RLS (#17) to enforce the filter globally.</div>
+</section>
+
+<!-- ============ 28. Isolation levels ============ -->
+<section class="uc" id="uc28">
+  <h2><span class="num">28</span>Transactions &amp; isolation — pick the right guarantee</h2>
+  <p class="scenario">Scenario: transferring money between accounts. READ COMMITTED (the default) permits anomalies under concurrency that stricter levels prevent.</p>
+  <div class="analogy"><b>Analogy:</b> Bank tellers sharing one ledger: READ COMMITTED lets tellers glance at the live ledger mid-work; SERIALIZABLE behaves as if tellers took turns — and occasionally tells one “your work collided, redo it” (the retry).</div>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">BEGIN ISOLATION LEVEL SERIALIZABLE</span>;
+  <span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance - 100 <span class="kw">WHERE</span> id = 1;
+  <span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance + 100 <span class="kw">WHERE</span> id = 2;
+<span class="kw">COMMIT</span>;
+<span class="cm">-- on conflict: ERROR 40001 serialization_failure → retry the transaction</span></code></pre>
+  <div class="label">Cheat sheet</div>
+  <table class="out">
+    <tr><th>level</th><th>prevents</th><th>use when</th></tr>
+    <tr><td>READ COMMITTED (default)</td><td>dirty reads</td><td>general CRUD; each statement sees latest committed data</td></tr>
+    <tr><td>REPEATABLE READ</td><td>+ non-repeatable reads, snapshot for whole txn</td><td>reports/exports needing one consistent view</td></tr>
+    <tr><td>SERIALIZABLE</td><td>+ all anomalies (as if run one-by-one)</td><td>money movement, inventory — with a retry loop</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Money movement, inventory decrement, seat counts: SERIALIZABLE + retry loop</li><li>Single-statement atomic math: <code>SET balance = balance - 100</code> is already race-free</li><li><code>SELECT ... FOR UPDATE</code> when you must read-then-write specific rows</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Read balance into the app, compute, write back at READ COMMITTED — the classic lost update</li><li>Holding a transaction open across user think-time — blocks vacuum (#29) and other writers</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Postgres SERIALIZABLE is optimistic (SSI) — no extra blocking, it aborts one transaction instead of deadlocking, so your app must retry on error 40001. Cheaper everyday tools: <code>SELECT ... FOR UPDATE</code> to lock specific rows, and single-statement atomic updates (<code>SET balance = balance - 100</code>) which are already race-free.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Using SERIALIZABLE without a retry loop is worse than not using it: users just see “could not serialize access” errors. The error is the feature — your code must catch 40001 and re-run the transaction. Also don’t mix isolation levels across transactions touching the same data and expect combined guarantees.</div>
+</section>
+
+<!-- ============ 29. VACUUM ============ -->
+<section class="uc" id="uc29">
+  <h2><span class="num">29</span>VACUUM &amp; bloat — why tables get slow over time</h2>
+  <p class="scenario">Scenario: a heavily-updated table gets slower every week even though row count is flat. MVCC keeps old row versions ("dead tuples") until vacuum reclaims them.</p>
+  <div class="analogy"><b>Analogy:</b> A whiteboard where every update crosses out the old line and writes a new one. VACUUM is the person who erases the crossed-out lines — stop them, and you run out of board even though nothing new was said.</div>
+  <div class="label">Query — check bloat pressure</div>
+  <pre><code><span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup,
+       <span class="fn">round</span>(100.0 * n_dead_tup / <span class="fn">nullif</span>(n_live_tup + n_dead_tup, 0), 1) <span class="kw">AS</span> dead_pct,
+       last_autovacuum
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">ORDER BY</span> n_dead_tup <span class="kw">DESC LIMIT</span> 3;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>relname</th><th>n_live_tup</th><th>n_dead_tup</th><th>dead_pct</th><th>last_autovacuum</th></tr>
+    <tr><td>carts</td><td>2,100,000</td><td>1,890,000</td><td style="color:var(--red)">47.4</td><td>2026-06-28 03:11</td></tr>
+    <tr><td>sessions</td><td>890,000</td><td>120,400</td><td>11.9</td><td>2026-07-03 02:40</td></tr>
+    <tr><td>orders</td><td>5,000,000</td><td>41,200</td><td style="color:var(--green)">0.8</td><td>2026-07-03 01:15</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Monitor <code>n_dead_tup</code> weekly; tune scale factor per hot table</li><li><code>ALTER TABLE hot SET (autovacuum_vacuum_scale_factor = 0.01)</code></li><li>Set <code>idle_in_transaction_session_timeout</code> globally</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>VACUUM FULL</code> during business hours — exclusive lock, table offline</li><li>Disabling autovacuum because “it uses CPU” — you’ve scheduled a slow-motion outage</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Every UPDATE writes a new row version; the old one stays until vacuumed. High <code>dead_pct</code> + stale <code>last_autovacuum</code> = autovacuum can't keep up. Fixes: per-table tuning (<code>ALTER TABLE carts SET (autovacuum_vacuum_scale_factor = 0.01)</code>), shorter transactions (long ones block cleanup), and <code>pg_repack</code> for online debloating. Never disable autovacuum — tune it.</div>
+  <div class="warn"><b>Veteran tip:</b> A single forgotten <code>idle in transaction</code> connection can hold back vacuum for the whole database. Set <code>idle_in_transaction_session_timeout</code>.</div>
+</section>
+
+<!-- ============ 30. Pooling ============ -->
+<section class="uc" id="uc30">
+  <h2><span class="num">30</span>Connection pooling — Postgres hates 1,000 connections</h2>
+  <p class="scenario">Scenario: traffic spike, app opens 800 connections, database melts at 40% idle CPU. Each Postgres connection is a full OS process — they're expensive even when idle.</p>
+  <div class="analogy"><b>Analogy:</b> A taxi fleet vs. everyone owning a car: 30 shared taxis (server connections) serve thousands of riders (client connections), because each rider only needs a car for minutes at a time.</div>
+  <div class="label">Query — see where connections go</div>
+  <pre><code><span class="kw">SELECT</span> state, <span class="fn">count</span>(*) <span class="kw">FROM</span> pg_stat_activity
+<span class="kw">GROUP BY</span> state <span class="kw">ORDER BY</span> 2 <span class="kw">DESC</span>;</code></pre>
+  <div class="label">Output — the classic pathology</div>
+  <table class="out">
+    <tr><th>state</th><th>count</th></tr>
+    <tr><td>idle</td><td>742</td></tr>
+    <tr><td>active</td><td>31</td></tr>
+    <tr><td>idle in transaction</td><td style="color:var(--red)">9</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>PgBouncer transaction mode for web/API traffic</li><li>Pool size ≈ 2–4 × CPU cores — small pools genuinely go faster</li><li>Separate session-mode pool for LISTEN/NOTIFY and session state</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Raising <code>max_connections</code> to 5000 to “fix” connection errors — more idle processes, worse latency</li><li>A connection per request with no pool — handshake + process spawn per HTTP hit</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> 742 idle processes doing nothing but consuming memory and locks. Put <b>PgBouncer</b> in <code>transaction</code> pooling mode in front: thousands of client connections multiplex over ~30–60 real server connections (rule of thumb: pool ≈ 2–4 × CPU cores). Result: lower latency, no <code>too many connections</code> errors, headroom for spikes. Transaction mode caveat: no session state (SET, LISTEN, prepared statements need care).</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> PgBouncer in transaction mode breaks anything session-scoped: <code>SET</code>, <code>LISTEN/NOTIFY</code> (#25), session advisory locks (#24), server-side prepared statements. Why wrong: features work in dev (direct connection), die in prod (pooled). Route session-stateful workloads through a separate session-mode pool.</div>
+</section>
+
+<h3 class="cat">Sharp Edges Every Veteran Respects</h3>
+
+<!-- ============ 31. NULL ============ -->
+<section class="uc" id="uc31">
+  <h2><span class="num">31</span>NULL — three-valued logic bites everyone</h2>
+  <p class="scenario">Scenario: “find users NOT in the banned list” returns zero rows and nobody knows why. NULL is the culprit — SQL logic has three values: true, false, and <em>unknown</em>.</p>
+  <div class="analogy"><b>Analogy:</b> NULL means “unknown”, not “empty”. Ask “is the unknown number equal to 5?” — the only honest answer is “don’t know.” And WHERE keeps only definite yes rows, so every “don’t know” is silently thrown away.</div>
+  <div class="label">The classic traps</div>
+  <pre><code><span class="kw">SELECT</span> <span class="kw">NULL</span> = <span class="kw">NULL</span>;                      <span class="cm">-- NULL  (not true!)</span>
+<span class="kw">SELECT</span> 5 &lt;&gt; <span class="kw">NULL</span>;                        <span class="cm">-- NULL  (not true!)</span>
+
+<span class="cm">-- the killer: NOT IN with a NULL in the list</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users
+<span class="kw">WHERE</span> id <span class="kw">NOT IN</span> (<span class="kw">SELECT</span> banned_id <span class="kw">FROM</span> bans);  <span class="cm">-- bans has one NULL → 0 rows, always</span>
+
+<span class="cm">-- the fixes</span>
+<span class="kw">WHERE</span> id <span class="kw">IS DISTINCT FROM</span> other_id       <span class="cm">-- NULL-safe comparison</span>
+<span class="kw">WHERE NOT EXISTS</span> (<span class="kw">SELECT</span> 1 <span class="kw">FROM</span> bans b <span class="kw">WHERE</span> b.banned_id = users.id)
+<span class="fn">COALESCE</span>(discount, 0)                     <span class="cm">-- default a NULL</span>
+<span class="fn">NULLIF</span>(total, 0)                          <span class="cm">-- avoid division by zero: x / NULLIF(y,0)</span></code></pre>
+  <div class="label">Output — behavior comparison</div>
+  <table class="out">
+    <tr><th>expression</th><th>result</th><th>surprised?</th></tr>
+    <tr><td>NULL = NULL</td><td>NULL</td><td>most people</td></tr>
+    <tr><td>NULL IS NULL</td><td>true</td><td>—</td></tr>
+    <tr><td>1 IS DISTINCT FROM NULL</td><td>true</td><td>the NULL-safe ≠</td></tr>
+    <tr><td>x NOT IN (1, NULL)</td><td>never true</td><td>everyone, once</td></tr>
+    <tr><td>COUNT(col) vs COUNT(*)</td><td>skips NULLs vs counts rows</td><td>silent report bugs</td></tr>
+    <tr><td>'a' || NULL</td><td>NULL (concat vanishes)</td><td>use concat() or coalesce</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li><code>NOT EXISTS</code> for “has none” checks — NULL-proof and well-planned</li><li><code>IS DISTINCT FROM</code> when either side may be NULL</li><li><code>COALESCE</code> to make “NULL means zero” explicit</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>NOT IN (subquery)</code> where the subquery can yield NULL — returns nothing, forever</li><li><code>WHERE col != NULL</code> — always empty; it’s <code>IS NOT NULL</code></li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Prefer <code>NOT EXISTS</code> over <code>NOT IN</code> (NULL-proof <em>and</em> usually a better plan), <code>IS DISTINCT FROM</code> for NULL-safe comparisons, and <code>COUNT(*)</code> unless you specifically want to skip NULLs. Also note: unique indexes allow multiple NULLs by default (PG 15+ offers <code>NULLS NOT DISTINCT</code>), and <code>ORDER BY col DESC</code> puts NULLs first — add <code>NULLS LAST</code>.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Aggregates quietly skip NULLs: <code>AVG(rating)</code> over {5, NULL, NULL, 1} is 3, not 2 — your “average rating” ignores everyone who didn’t rate. Decide explicitly whether NULL means “exclude” or “treat as zero” and encode it with COALESCE.</div>
+</section>
+
+<!-- ============ 32. timestamptz ============ -->
+<section class="uc" id="uc32">
+  <h2><span class="num">32</span>timestamptz vs timestamp — always the former</h2>
+  <p class="scenario">Scenario: app servers in UTC, office in Pune, users worldwide. With plain <code>timestamp</code>, “9:00” means nothing — 9:00 <em>where?</em> Daylight-saving bugs ship twice a year, on schedule.</p>
+  <div class="analogy"><b>Analogy:</b> <code>timestamptz</code> is a real moment — “the rocket launched” — the same instant for everyone on Earth, displayed in each viewer’s local clock. Plain <code>timestamp</code> is just wall-clock digits with no city attached: “9:00” written on a sticky note.</div>
+  <div class="label">Setup + queries</div>
+  <pre><code><span class="kw">CREATE TABLE</span> meetings (title <span class="nm">text</span>, starts_at <span class="nm">timestamptz</span>);
+<span class="kw">INSERT INTO</span> meetings <span class="kw">VALUES</span> (<span class="str">'Standup'</span>, <span class="str">'2026-07-03 09:00:00+05:30'</span>); <span class="cm">-- stored as UTC instant</span>
+
+<span class="cm">-- each client sees it in their own zone:</span>
+<span class="kw">SET</span> timezone = <span class="str">'Asia/Kolkata'</span>;
+<span class="kw">SELECT</span> starts_at <span class="kw">FROM</span> meetings;                       <span class="cm">-- 2026-07-03 09:00:00+05:30</span>
+<span class="kw">SET</span> timezone = <span class="str">'America/New_York'</span>;
+<span class="kw">SELECT</span> starts_at <span class="kw">FROM</span> meetings;                       <span class="cm">-- 2026-07-02 23:30:00-04</span>
+
+<span class="cm">-- “what calendar day was that in Pune?” — be explicit:</span>
+<span class="kw">SELECT</span> (starts_at <span class="kw">AT TIME ZONE</span> <span class="str">'Asia/Kolkata'</span>)::<span class="nm">date</span>;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>viewer timezone</th><th>same stored instant renders as</th></tr>
+    <tr><td>Asia/Kolkata</td><td>2026-07-03 09:00:00+05:30</td></tr>
+    <tr><td>America/New_York</td><td>2026-07-02 23:30:00-04</td></tr>
+    <tr><td>UTC</td><td>2026-07-03 03:30:00+00</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li><code>timestamptz</code> for every “when did it happen” column</li><li>Convert at the edge: <code>AT TIME ZONE 'Asia/Kolkata'</code> for day-bucketed reports</li><li>Future local-time events: store zone name in its own column</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Plain <code>timestamp</code> for events — “9:00” with no city attached; DST bugs twice a year</li><li>Zone abbreviations like <code>'IST'</code> — India? Israel? Ireland? Always <code>'Asia/Kolkata'</code></li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>timestamptz</code> stores a single unambiguous UTC instant (same 8 bytes as <code>timestamp</code> — zero storage cost); conversion happens only at display time. Rules of thumb: columns = <code>timestamptz</code>, group-by-day reports = convert first (<code>AT TIME ZONE 'Asia/Kolkata'</code>), future scheduled events in local civil time (“every day 9am Pune”) = store the zone name in its own column and compute.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>AT TIME ZONE</code> is a footgun: applied to a <code>timestamptz</code> it <em>strips</em> the zone (returns naive timestamp); applied to a naive <code>timestamp</code> it <em>adds</em> one. Applying it twice round-trips. And never use zone abbreviations like <code>'IST'</code> — ambiguous (India? Israel? Ireland!) — always full names like <code>'Asia/Kolkata'</code>.</div>
+</section>
+
+<!-- ============ 33. Zero-downtime DDL ============ -->
+<section class="uc" id="uc33">
+  <h2><span class="num">33</span>Zero-downtime migrations — DDL without an outage</h2>
+  <p class="scenario">Scenario: add an index to a 200M-row table on a live system. Plain <code>CREATE INDEX</code> blocks all writes for 20 minutes — that’s an outage with extra steps.</p>
+  <div class="analogy"><b>Analogy:</b> Repaving a highway lane-by-lane at night with traffic flowing, instead of closing the whole road for a day. Slower for the crew, invisible to the drivers.</div>
+  <div class="label">The safe playbook</div>
+  <pre><code><span class="cm">-- 1. Indexes: CONCURRENTLY builds without blocking writes (can't run in a transaction)</span>
+<span class="kw">CREATE INDEX CONCURRENTLY</span> idx_orders_email <span class="kw">ON</span> orders (email);
+
+<span class="cm">-- 2. Always set a lock timeout so migrations fail fast instead of queueing behind traffic</span>
+<span class="kw">SET</span> lock_timeout = <span class="str">'3s'</span>;
+
+<span class="cm">-- 3. NOT NULL on a big table, without the full-table-scan lock:</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD CONSTRAINT</span> orders_email_nn
+  <span class="kw">CHECK</span> (email <span class="kw">IS NOT NULL</span>) <span class="kw">NOT VALID</span>;   <span class="cm">-- instant: new rows only</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">VALIDATE CONSTRAINT</span> orders_email_nn; <span class="cm">-- scans with weak lock</span>
+
+<span class="cm">-- 4. ADD COLUMN with a constant DEFAULT is instant since PG 11 — no rewrite:</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD COLUMN</span> source <span class="nm">text</span> <span class="kw">DEFAULT</span> <span class="str">'web'</span>;</code></pre>
+  <div class="label">Output — lock impact comparison</div>
+  <table class="out">
+    <tr><th>operation</th><th>blocks writes?</th><th>duration on 200M rows</th></tr>
+    <tr><td>CREATE INDEX</td><td style="color:var(--red)">yes — all writes</td><td>~20 min outage</td></tr>
+    <tr><td>CREATE INDEX CONCURRENTLY</td><td style="color:var(--green)">no</td><td>~35 min, invisible</td></tr>
+    <tr><td>ADD COLUMN ... DEFAULT 'web' (PG11+)</td><td style="color:var(--green)">instant</td><td>milliseconds</td></tr>
+    <tr><td>ALTER COLUMN TYPE int → bigint</td><td style="color:var(--red)">yes — full rewrite</td><td>needs a multi-step dance</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li><code>CREATE INDEX CONCURRENTLY</code> — always, on any live table</li><li><code>SET lock_timeout = '3s'</code> before every migration</li><li><code>NOT VALID</code> + <code>VALIDATE CONSTRAINT</code> to split enforce/verify</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Plain <code>CREATE INDEX</code> on a 200M-row table at noon — a 20-minute write outage</li><li>Running migrations without lock_timeout — your ALTER queues behind one idle transaction and the whole DB appears frozen</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The trio that prevents 3am pages: <code>CONCURRENTLY</code> for every index on a live table, <code>lock_timeout</code> so a stuck migration aborts in seconds instead of queueing every query in the database behind it, and <code>NOT VALID</code> + <code>VALIDATE</code> to split “enforce for new rows” from “verify old rows”.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Even a “cheap” DDL needs a brief exclusive lock — and lock <em>queuing</em> is the real killer: your ALTER waits behind one long transaction, and every new query waits behind your ALTER. The database looks frozen; the cause is one idle report connection. Also: a failed <code>CREATE INDEX CONCURRENTLY</code> leaves an INVALID index behind — check <code>\d</code> and drop it before retrying.</div>
+</section>
+
+<!-- ============ 34. Fast counts ============ -->
+<section class="uc" id="uc34">
+  <h2><span class="num">34</span>Fast counts — COUNT(*) is honest but slow</h2>
+  <p class="scenario">Scenario: the admin dashboard shows “total users” and now takes 40 seconds, because exact <code>COUNT(*)</code> must visit every live row (MVCC — no maintained global counter exists).</p>
+  <div class="analogy"><b>Analogy:</b> Counting a stadium crowd head-by-head vs. reading ticket-sales figures. The gate tally is 99.9% right and instant — head-counting is for auditors, not for the scoreboard.</div>
+  <div class="label">Options, fastest first</div>
+  <pre><code><span class="cm">-- 1. Planner estimate: instant, usually within ~1% on analyzed tables</span>
+<span class="kw">SELECT</span> reltuples::<span class="nm">bigint</span> <span class="kw">AS</span> estimate
+<span class="kw">FROM</span> pg_class <span class="kw">WHERE</span> relname = <span class="str">'users'</span>;
+
+<span class="cm">-- 2. Estimate for any filtered query — parse it from EXPLAIN:</span>
+<span class="kw">EXPLAIN</span> (<span class="kw">FORMAT</span> json) <span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> country = <span class="str">'IN'</span>;
+<span class="cm">-- → Plan.“Plan Rows”: 1,204,117</span>
+
+<span class="cm">-- 3. Exact count, but only when someone truly needs it</span>
+<span class="kw">SELECT</span> <span class="fn">count</span>(*) <span class="kw">FROM</span> users;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>method</th><th>result</th><th>time</th></tr>
+    <tr><td>pg_class.reltuples</td><td>18,204,000</td><td>0.2 ms</td></tr>
+    <tr><td>EXPLAIN row estimate (filtered)</td><td>1,204,117</td><td>1.1 ms</td></tr>
+    <tr><td>exact COUNT(*)</td><td>18,203,417</td><td>41,300 ms</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Estimates for dashboards, “~1.2M results” pagination, monitoring</li><li>Trigger-maintained counter tables when exactness pays the bills</li><li>Count a partial index (#08) when you only count a small subset</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Exact <code>COUNT(*)</code> on every admin-page load of a 100M-row table</li><li>Billing or quota enforcement from <code>reltuples</code> estimates — it drifts with vacuum timing</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Dashboards, pagination (“~1.2M results”), and monitoring rarely need exact numbers — estimates are 100,000× cheaper and refresh with autovacuum/ANALYZE. When exactness matters (billing, quotas), maintain a counter table updated by trigger, or count a partial index (#08) so the scan is small. Google shows “about 1,200,000 results” for exactly this reason.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>reltuples</code> is only as fresh as the last ANALYZE/VACUUM — on a table with heavy churn and lazy autovacuum it can drift badly (and reads 0 on a never-analyzed table). Don’t use estimates for anything with money or limits attached. And <code>COUNT(col)</code> ≠ <code>COUNT(*)</code>: the former skips NULLs (#31).</div>
+</section>
+
+<h3 class="cat">Everyday Craft</h3>
+
+<section class="uc" id="uc35">
+  <h2><span class="num">35</span>Find &amp; kill duplicates — then lock the door</h2>
+  <p class="scenario">Scenario: a years-old table with no unique constraint on email. Find the dupes, keep the oldest row, delete the rest, and make recurrence impossible.</p>
+  <div class="analogy"><b>Analogy:</b> Cleaning up a messy contact list: merge the duplicate entries once, then switch on “no duplicates allowed” — otherwise you’ll be cleaning again next quarter.</div>
+  <div class="label">Find them</div>
+  <pre><code><span class="kw">SELECT</span> email, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> users
+<span class="kw">GROUP BY</span> email <span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) &gt; 1;</code></pre>
+  <table class="out">
+    <tr><th>email</th><th>count</th></tr>
+    <tr><td>ravi@corp.com</td><td>3</td></tr>
+    <tr><td>asha@corp.com</td><td>2</td></tr>
+  </table>
+  <div class="label">Delete keeping the oldest, then prevent forever</div>
+  <pre><code><span class="kw">DELETE FROM</span> users <span class="kw">WHERE</span> id <span class="kw">IN</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> id, <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> email <span class="kw">ORDER BY</span> created_at, id) rn
+    <span class="kw">FROM</span> users) t
+  <span class="kw">WHERE</span> rn &gt; 1);
+
+<span class="kw">CREATE UNIQUE INDEX CONCURRENTLY</span> uq_users_email <span class="kw">ON</span> users (email);</code></pre>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Dedupe once, then add the unique constraint in the same maintenance window</li><li>Deterministic keeper: <code>ORDER BY created_at, id</code> — same survivor every run</li><li>Dry-run the inner SELECT first and eyeball what will die</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>A scheduled “dedupe job” forever instead of a constraint — treating the symptom</li><li>Deleting by <code>email IN (dupes)</code> — that deletes the keepers too</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>ROW_NUMBER() OVER (PARTITION BY ...)</code> marks survivors (rn = 1) and victims (rn &gt; 1) in one pass. The unique index converts a recurring data-quality chore into a database guarantee — future dupes fail loudly at insert time, where the bug actually is.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> You cannot create the unique index while duplicates exist — clean first. NULL emails don’t count as duplicates of each other (NULL ≠ NULL, #31) — decide if that’s what you want (PG 15+: <code>UNIQUE NULLS NOT DISTINCT</code>). And rows referenced by foreign keys can’t just be deleted — re-point children to the keeper first.</div>
+</section>
+
+<section class="uc" id="uc36">
+  <h2><span class="num">36</span>Foreign keys — choose your ON DELETE story</h2>
+  <p class="scenario">Scenario: deleting a customer. What happens to their orders? That’s a business decision, and the FK clause is where you encode it.</p>
+  <div class="analogy"><b>Analogy:</b> A library card: RESTRICT won’t shred a member’s card while books are checked out; CASCADE shreds the card <em>and</em> erases every loan record; SET NULL keeps the loans but marks the borrower “unknown”.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE TABLE</span> orders (
+  id          <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  customer_id <span class="nm">bigint NOT NULL REFERENCES</span> customers(id) <span class="kw">ON DELETE RESTRICT</span>,
+  total       <span class="nm">numeric</span>
+);
+<span class="cm">-- Postgres does NOT index FK columns automatically. Do it yourself:</span>
+<span class="kw">CREATE INDEX ON</span> orders (customer_id);</code></pre>
+  <div class="label">Behavior comparison</div>
+  <table class="out">
+    <tr><th>clause</th><th>DELETE FROM customers WHERE id=7 …</th><th>fits when</th></tr>
+    <tr><td>RESTRICT / NO ACTION</td><td>fails if orders exist</td><td>financial data — never lose orders (safe default)</td></tr>
+    <tr><td>CASCADE</td><td>deletes the orders too</td><td>true child data: cart items, session rows</td></tr>
+    <tr><td>SET NULL</td><td>orders survive, customer_id → NULL</td><td>optional relationships: “assigned agent left”</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Index every FK column — required for fast parent deletes and joins</li><li>CASCADE for composition (line items die with the order)</li><li>RESTRICT for anything with financial or audit value</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Skipping FKs “for performance” — orphaned rows are the slowest bug to clean up</li><li>CASCADE from a big parent by reflex — one DELETE silently nukes 40M child rows</li><li>Enforcing referential integrity in app code only — every service must never have a bug, forever</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> FKs make invalid states unrepresentable — no orphaned orders, no dangling references, regardless of which app, script, or human touched the data. The delete behavior documents your domain model right in the schema.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The un-indexed FK column is a classic production killer: every <code>DELETE FROM customers</code> sequential-scans the entire orders table to check references — a 1-row delete takes minutes and locks pile up behind it. Postgres indexes the referenced side (the PK), never the referencing side.</div>
+</section>
+
+<section class="uc" id="uc37">
+  <h2><span class="num">37</span>Constraining values — CHECK vs ENUM vs lookup table</h2>
+  <p class="scenario">Scenario: an order status column must only ever hold known values. Three tools, three trade-off profiles — veterans pick by how often the list changes.</p>
+  <div class="analogy"><b>Analogy:</b> A dress code: printed on the door (CHECK — easy to reprint), baked into the building’s architecture (ENUM — renovation required to change), or a guest list at reception (lookup table — edit anytime, can hold notes per guest).</div>
+  <div class="label">The three options</div>
+  <pre><code><span class="cm">-- 1. CHECK: simple, alterable</span>
+status <span class="nm">text NOT NULL CHECK</span> (status <span class="kw">IN</span> (<span class="str">'pending'</span>,<span class="str">'paid'</span>,<span class="str">'shipped'</span>))
+
+<span class="cm">-- 2. ENUM: typed, ordered, compact</span>
+<span class="kw">CREATE TYPE</span> order_status <span class="kw">AS ENUM</span> (<span class="str">'pending'</span>,<span class="str">'paid'</span>,<span class="str">'shipped'</span>);
+
+<span class="cm">-- 3. Lookup table: values are data</span>
+<span class="kw">CREATE TABLE</span> statuses (code <span class="nm">text PRIMARY KEY</span>, label <span class="nm">text</span>, sort_order <span class="nm">int</span>);
+status <span class="nm">text NOT NULL REFERENCES</span> statuses(code)</code></pre>
+  <div class="label">Decision table</div>
+  <table class="out">
+    <tr><th></th><th>CHECK</th><th>ENUM</th><th>lookup table</th></tr>
+    <tr><td>add a value</td><td>ALTER constraint</td><td>ALTER TYPE ADD VALUE</td><td>plain INSERT</td></tr>
+    <tr><td>remove/rename</td><td>easy</td><td style="color:var(--red)">painful (recreate type)</td><td>easy</td></tr>
+    <tr><td>metadata per value</td><td>no</td><td>no</td><td style="color:var(--green)">yes (label, color, sort)</td></tr>
+    <tr><td>best for</td><td>stable short lists</td><td>truly fixed sets (weekdays)</td><td>business-managed lists</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>CHECK for small stable sets you control in migrations</li><li>Lookup table + FK when product managers add values or values need labels/colors</li><li>ENUM for genuinely permanent sets: card suits, ISO weekdays</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Unconstrained <code>text</code> — six months later: <code>'paid'</code>, <code>'Paid'</code>, <code>'PAID '</code>, <code>'payed'</code></li><li>ENUM for anything a stakeholder might rename — dropping a value means recreating the type and every column using it</li><li>Magic numbers (<code>status int</code>) with meanings documented only in a wiki</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> All three push validation to the only layer every writer shares. The veteran default: CHECK for engineer-owned lists, lookup table for business-owned lists — ENUMs look elegant but age the worst.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>ALTER TYPE ... ADD VALUE</code> can’t run inside a transaction block on older versions, and you can never DROP an enum value — teams end up with zombie values like <code>'shipped_old_do_not_use'</code>. CHECK constraint edits take a brief exclusive lock — use <code>NOT VALID</code> + <code>VALIDATE</code> (#33) on big tables.</div>
+</section>
+
+<section class="uc" id="uc38">
+  <h2><span class="num">38</span>Primary keys — identity vs UUIDv4 vs UUIDv7</h2>
+  <p class="scenario">Scenario: choosing PKs for a new system. Sequential bigints are fast but guessable and awkward across services; random UUIDs shred index locality. UUIDv7 threads the needle.</p>
+  <div class="analogy"><b>Analogy:</b> Numbered bakery tokens (identity) file themselves in order; random raffle tickets (UUIDv4) are fine in a shoebox but a nightmare to file in millions — every new ticket belongs in a random drawer. UUIDv7 tickets are raffle-unique but numbered by time, so they file at the end like tokens.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="cm">-- workhorse default:</span>
+id <span class="nm">bigint</span> <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>
+
+<span class="cm">-- distributed / client-generated / non-guessable (PG 18: uuidv7(); earlier: extension or app-side):</span>
+id <span class="nm">uuid</span> <span class="kw">PRIMARY KEY DEFAULT</span> <span class="fn">uuidv7</span>()</code></pre>
+  <div class="label">Trade-offs</div>
+  <table class="out">
+    <tr><th></th><th>bigint identity</th><th>UUIDv4</th><th>UUIDv7</th></tr>
+    <tr><td>size</td><td>8 B</td><td>16 B</td><td>16 B</td></tr>
+    <tr><td>insert locality (btree)</td><td style="color:var(--green)">append-only, cache-friendly</td><td style="color:var(--red)">random — page splits everywhere</td><td style="color:var(--green)">append-mostly</td></tr>
+    <tr><td>guessable / leaks volume</td><td style="color:var(--red)">yes (/orders/10041)</td><td>no</td><td>no (leaks rough time)</td></tr>
+    <tr><td>generate in client/offline</td><td>no</td><td>yes</td><td>yes</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>bigint identity for internal, single-DB tables — smallest, fastest</li><li>UUIDv7 for public-facing IDs, offline-first apps, merging data across regions</li><li>Both: internal bigint PK + public UUID column for the API</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>UUIDv4 PKs on high-insert tables — random inserts fragment the index and evict hot cache pages</li><li>Exposing sequential IDs publicly — competitors read your order volume off the URL</li><li><code>serial</code> in new code — <code>GENERATED ALWAYS AS IDENTITY</code> is the standard, safer form</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> PK choice is index-locality choice: btrees love monotonic keys. UUIDv7 keeps UUID benefits (unguessable, client-generatable, globally unique) while inserting like a sequence — measured write-throughput gaps between v4 and v7 on big tables are dramatic.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Identity gaps are normal — rollbacks and crashes burn numbers; never build logic that assumes gapless IDs (invoice numbering needs its own counter table). And don’t use <code>ORDER BY uuid_v7_id</code> as a precise event timeline — the timestamp is coarse; keep a real <code>created_at</code>.</div>
+</section>
+
+<section class="uc" id="uc39">
+  <h2><span class="num">39</span>EXISTS vs IN vs JOIN — say what you mean</h2>
+  <p class="scenario">Scenario: “customers who have at least one order.” Three phrasings, one intent — but JOIN multiplies rows, and NOT IN has a NULL trapdoor (#31).</p>
+  <div class="analogy"><b>Analogy:</b> Asking “does this person have any children?” — EXISTS peeks into the room and answers yes/no at the first child it sees. JOIN drags every child out to be counted, then you have to de-duplicate the parents you cloned.</div>
+  <div class="label">The semi-join, three ways</div>
+  <pre><code><span class="cm">-- ✅ EXISTS: stops at first match, never duplicates</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> customers c
+<span class="kw">WHERE EXISTS</span> (<span class="kw">SELECT</span> 1 <span class="kw">FROM</span> orders o <span class="kw">WHERE</span> o.customer_id = c.id);
+
+<span class="cm">-- ⚠️ JOIN: a customer with 500 orders appears 500 times</span>
+<span class="kw">SELECT DISTINCT</span> c.name <span class="kw">FROM</span> customers c <span class="kw">JOIN</span> orders o <span class="kw">ON</span> o.customer_id = c.id;
+
+<span class="cm">-- ✅ anti-join: customers with NO orders</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> customers c
+<span class="kw">WHERE NOT EXISTS</span> (<span class="kw">SELECT</span> 1 <span class="kw">FROM</span> orders o <span class="kw">WHERE</span> o.customer_id = c.id);</code></pre>
+  <div class="label">Output — behavior on a customer with 500 orders</div>
+  <table class="out">
+    <tr><th>phrasing</th><th>rows for “Acme”</th><th>NULL-safe negation?</th></tr>
+    <tr><td>EXISTS</td><td>1</td><td style="color:var(--green)">NOT EXISTS: yes</td></tr>
+    <tr><td>IN</td><td>1</td><td style="color:var(--red)">NOT IN: breaks on NULLs</td></tr>
+    <tr><td>JOIN</td><td>500 (needs DISTINCT)</td><td>needs LEFT JOIN ... IS NULL</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>EXISTS / NOT EXISTS for “has any” / “has none” — intent-revealing and NULL-proof</li><li>JOIN when you actually need the child columns in the output</li><li>IN for small literal lists: <code>status IN ('a','b')</code></li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>JOIN + DISTINCT to fix duplicates the JOIN itself created — extra sort, blurred intent</li><li><code>NOT IN (SELECT nullable_col ...)</code> — one NULL, zero results, no error (#31)</li><li><code>COUNT(*) &gt; 0</code> to test existence — counts everything to answer a yes/no</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> The planner turns EXISTS into a semi-join: probe, first match wins, move on. On “does at least one exist” questions that’s both the fastest plan and the phrasing that says exactly what you mean — future readers included.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>SELECT 1</code> vs <code>SELECT *</code> inside EXISTS makes zero performance difference — the subquery’s select list is ignored. The thing that actually matters: an index on the probed column (<code>orders.customer_id</code> — see #36’s un-indexed-FK trap).</div>
+</section>
+
+<section class="uc" id="uc40">
+  <h2><span class="num">40</span>Fuzzy search — pg_trgm for typos and substrings</h2>
+  <p class="scenario">Scenario: users type “jhon smit” and expect to find John Smith. Full-text search (#07) matches words, not typos — trigram similarity handles misspellings and mid-word substrings.</p>
+  <div class="analogy"><b>Analogy:</b> Matching names by overlapping three-letter shingles: “john” and “jhon” share most of their letter-triplets, so they score as near-identical even though string equality sees total strangers.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE EXTENSION</span> pg_trgm;
+<span class="kw">CREATE INDEX</span> idx_users_name_trgm <span class="kw">ON</span> users <span class="kw">USING</span> <span class="fn">gin</span> (full_name <span class="fn">gin_trgm_ops</span>);</code></pre>
+  <div class="label">Queries — indexed ILIKE and similarity ranking</div>
+  <pre><code><span class="cm">-- leading-wildcard ILIKE now uses the index (impossible with btree):</span>
+<span class="kw">SELECT</span> full_name <span class="kw">FROM</span> users <span class="kw">WHERE</span> full_name <span class="kw">ILIKE</span> <span class="str">'%smit%'</span>;
+
+<span class="cm">-- typo-tolerant ranking:</span>
+<span class="kw">SELECT</span> full_name, <span class="fn">similarity</span>(full_name, <span class="str">'jhon smit'</span>) <span class="kw">AS</span> score
+<span class="kw">FROM</span> users
+<span class="kw">WHERE</span> full_name % <span class="str">'jhon smit'</span>   <span class="cm">-- % = "similar enough" operator</span>
+<span class="kw">ORDER BY</span> score <span class="kw">DESC LIMIT</span> 3;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>full_name</th><th>score</th></tr>
+    <tr><td>John Smith</td><td>0.57</td></tr>
+    <tr><td>Jon Smythe</td><td>0.38</td></tr>
+    <tr><td>Joan Smart</td><td>0.31</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Name/address/SKU lookup with typo tolerance</li><li>Making existing <code>ILIKE '%x%'</code> searches indexable without app changes</li><li>Combine with FTS (#07): trigram for the query box, tsvector for document bodies</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Trigram search on 1–2 character inputs — too few trigrams, noise results</li><li>Levenshtein-in-a-loop from app code over the whole table — the index can’t help you there</li><li>Replacing FTS with trigrams for long documents — wrong tool, huge index</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> One extension turns Postgres into a decent typo-tolerant search engine: the GIN trigram index accelerates <code>ILIKE</code>, <code>%</code> similarity, and even regex matching. Tune the cutoff with <code>SET pg_trgm.similarity_threshold = 0.4</code>.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Trigram GIN indexes are large (often bigger than the column data) and slow down writes — put them on search columns, not on everything. And <code>similarity()</code> in the SELECT doesn’t use the index — only the <code>%</code> operator and LIKE/ILIKE patterns do; keep <code>%</code> in the WHERE clause.</div>
+</section>
+
+<section class="uc" id="uc41">
+  <h2><span class="num">41</span>RETURNING + writable CTEs — atomic pipelines</h2>
+  <p class="scenario">Scenario: archive expired sessions — move rows from one table to another with no window where they exist in both or neither. One statement, fully atomic.</p>
+  <div class="analogy"><b>Analogy:</b> Moving a file between drawers in one hand-motion, instead of photocopy → file the copy → walk back → shred the original — with a fire alarm (crash) possible between any two steps.</div>
+  <div class="label">Query</div>
+  <pre><code><span class="kw">WITH</span> moved <span class="kw">AS</span> (
+  <span class="kw">DELETE FROM</span> sessions
+  <span class="kw">WHERE</span> expires_at &lt; <span class="fn">now</span>()
+  <span class="kw">RETURNING</span> *
+)
+<span class="kw">INSERT INTO</span> sessions_archive <span class="kw">SELECT</span> * <span class="kw">FROM</span> moved
+<span class="kw">RETURNING</span> id;</code></pre>
+  <div class="label">Output</div>
+  <table class="out">
+    <tr><th>result</th></tr>
+    <tr><td>INSERT 0 4218 — 4,218 sessions moved, atomically</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Archive/move patterns: DELETE ... RETURNING feeding an INSERT</li><li><code>UPDATE ... RETURNING *</code> to get the final row without a follow-up SELECT</li><li>Claim-and-return in job queues (#11): UPDATE + RETURNING is the whole dequeue</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>SELECT → INSERT → DELETE as three app-side statements — a crash between them loses or duplicates rows</li><li>Chaining writable CTEs that read each other’s target tables — they all see the <em>same snapshot</em>, not each other’s writes</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> <code>RETURNING</code> makes every write also a read — no second round-trip, no race between “write it” and “read it back”. Writable CTEs chain writes into one atomic statement: move, split, fan-out, all-or-nothing.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> All CTEs in one statement see the snapshot from the statement’s start — a second CTE reading <code>sessions_archive</code> will <em>not</em> see the rows the first one just inserted. Order of execution between independent CTEs isn’t guaranteed either; chain them by reference (<code>FROM moved</code>), not by assumption.</div>
+</section>
+
+<section class="uc" id="uc42">
+  <h2><span class="num">42</span>Views as API contracts — refactor without fear</h2>
+  <p class="scenario">Scenario: three services and two BI tools query your tables directly. Every rename breaks someone. Put a view in between: the view is the promise, the tables are the implementation.</p>
+  <div class="analogy"><b>Analogy:</b> A restaurant menu: diners order from the menu, never from the kitchen. The chef can reorganize the entire kitchen overnight — as long as the menu still lists the same dishes, no customer notices.</div>
+  <div class="label">Setup</div>
+  <pre><code><span class="kw">CREATE VIEW</span> api_customers <span class="kw">AS
+SELECT</span> id,
+       full_name        <span class="kw">AS</span> name,
+       email,
+       created_at::<span class="nm">date</span> <span class="kw">AS</span> member_since
+<span class="kw">FROM</span> customers
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;      <span class="cm">-- soft-delete filter (#27) baked in</span>
+
+<span class="cm">-- later: rename the real column; repair the contract in the same transaction</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">RENAME COLUMN</span> full_name <span class="kw">TO</span> display_name;
+<span class="kw">CREATE OR REPLACE VIEW</span> api_customers <span class="kw">AS
+SELECT</span> id, display_name <span class="kw">AS</span> name, email, created_at::<span class="nm">date</span> <span class="kw">AS</span> member_since
+<span class="kw">FROM</span> customers <span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;
+<span class="kw">COMMIT</span>;   <span class="cm">-- consumers never saw a thing</span></code></pre>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Stable read models for BI tools and sibling services</li><li>Baking in mandatory filters: soft-delete, tenant scoping, published-only</li><li>Security surface: GRANT on the view, not the raw table (#45)</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li><code>SELECT *</code> views — the column list freezes at creation; new table columns silently don’t appear</li><li>Views stacked five deep on views — plans get opaque, performance debugging becomes archaeology</li><li>Confusing them with matviews (#16) — plain views run their query every time, they cache nothing</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> A view is a zero-cost stable interface: rename, split, or denormalize the underlying tables and repair the view in the same transaction — consumers get uninterrupted service. Simple single-table views are even writable (INSERT/UPDATE pass through).</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>CREATE OR REPLACE VIEW</code> can only <em>add</em> columns at the end — renaming or retyping an existing view column requires DROP + CREATE, which cascades to dependent views. Map your view dependency graph before refactoring (<code>\d+</code> or pg_depend), or the “safe” rename topples a tower you forgot existed.</div>
+</section>
+
+<section class="uc" id="uc43">
+  <h2><span class="num">43</span>Batch updates in chunks — never one giant UPDATE</h2>
+  <p class="scenario">Scenario: backfill a new column on 80M rows. One <code>UPDATE</code> statement = hours-long transaction, gigabytes of WAL, replication lag, and a vacuum mountain. Chunk it.</p>
+  <div class="analogy"><b>Analogy:</b> Repainting the office one room at a time over a week, instead of sealing the whole building for three days. Same paint, same walls — people keep working.</div>
+  <div class="label">The chunked backfill loop (app or DO block drives it)</div>
+  <pre><code><span class="cm">-- repeat until 0 rows affected:</span>
+<span class="kw">WITH</span> batch <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> orders
+  <span class="kw">WHERE</span> normalized_email <span class="kw">IS NULL</span>
+  <span class="kw">LIMIT</span> 5000
+  <span class="kw">FOR UPDATE SKIP LOCKED</span>
+)
+<span class="kw">UPDATE</span> orders o <span class="kw">SET</span> normalized_email = <span class="fn">lower</span>(<span class="fn">trim</span>(email))
+<span class="kw">FROM</span> batch <span class="kw">WHERE</span> o.id = batch.id;
+<span class="cm">-- commit, small sleep, repeat  (partial index on the WHERE keeps each pick instant, #08)</span></code></pre>
+  <div class="label">Output — impact comparison, 80M rows</div>
+  <table class="out">
+    <tr><th></th><th>one giant UPDATE</th><th>5k chunks</th></tr>
+    <tr><td>longest row locks held</td><td style="color:var(--red)">hours</td><td style="color:var(--green)">milliseconds</td></tr>
+    <tr><td>replication lag</td><td style="color:var(--red)">massive spike</td><td>smooth</td></tr>
+    <tr><td>vacuum debt</td><td>80M dead rows at once</td><td>spread out, autovacuum keeps up</td></tr>
+    <tr><td>crash at 90%?</td><td>everything rolls back</td><td>progress kept, resume where left off</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Backfills, mass status changes, GDPR scrubbing, big deletes (same pattern with DELETE)</li><li>Idempotent batches keyed on “still needs work” (<code>IS NULL</code>) — safe to re-run anytime</li><li>Throttle between commits; watch replication lag as you go</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>One statement to update 80M rows during business hours — lock queue + WAL flood + vacuum cliff</li><li>Chunking without an indexed predicate — each batch re-scans the table to find work</li><li>Wrapping all the chunks in one outer transaction — congratulations, you rebuilt the giant UPDATE</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Short transactions are the golden rule of live-system surgery (#29, #33): locks stay brief, WAL flows steadily, replicas keep up, autovacuum digests dead rows incrementally, and a crash costs one chunk instead of hours.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> The <code>LIMIT</code>-without-index version quietly degrades: each pass scans further to find unprocessed rows, so batch 1 is fast and batch 900 crawls. Partial index on the work predicate (<code>WHERE normalized_email IS NULL</code>) keeps every batch O(chunk). Also add <code>SKIP LOCKED</code> so the backfill never fights production writes.</div>
+</section>
+
+<h3 class="cat">Stewardship — Security, Backups, Planner</h3>
+
+<section class="uc" id="uc44">
+  <h2><span class="num">44</span>Backups — pg_dump vs PITR, and the restore test</h2>
+  <p class="scenario">Scenario: someone runs <code>DELETE FROM orders</code> without a WHERE at 14:32. A nightly dump loses the whole day. Point-in-time recovery rewinds to 14:31.</p>
+  <div class="analogy"><b>Analogy:</b> A photo of your house (dump) vs. continuous CCTV (PITR): the photo shows last night; the video lets you rewind to the second before the pipe burst.</div>
+  <div class="label">The two tiers</div>
+  <pre><code><span class="cm">-- logical dump: portable, per-database, great < ~100GB</span>
+pg_dump -Fc mydb &gt; mydb.dump          <span class="cm"># custom format: compressed, parallel-restorable</span>
+pg_restore -j 8 -d mydb_restored mydb.dump
+
+<span class="cm">-- physical + WAL archiving (PITR): base backup + every change since</span>
+pgbackrest --stanza=main backup       <span class="cm"># or wal-g / barman</span>
+pgbackrest --stanza=main restore --type=time <span class="str">"--target=2026-07-03 14:31:00"</span></code></pre>
+  <div class="label">Comparison</div>
+  <table class="out">
+    <tr><th></th><th>pg_dump</th><th>PITR (base + WAL)</th></tr>
+    <tr><td>restore granularity</td><td>backup moment only</td><td style="color:var(--green)">any second</td></tr>
+    <tr><td>data loss window</td><td style="color:var(--red)">up to 24h</td><td>seconds–minutes of WAL</td></tr>
+    <tr><td>works across PG versions</td><td style="color:var(--green)">yes</td><td>same major version</td></tr>
+    <tr><td>2TB database</td><td style="color:var(--red)">impractical</td><td>designed for it</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>PITR (pgbackrest/wal-g) as the production safety net</li><li>pg_dump for dev refreshes, migrations across versions, single-table exports</li><li><b>Restore drill on a schedule</b> — timed, documented, automated</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>Backups on the same disk/server as the database — one failure takes both</li><li>“The cron job ran, we’re safe” — an untested backup is a hope, not a backup</li><li>Replication as your backup — replicas replay the bad DELETE within milliseconds</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> PITR turns “fat-finger delete” from a company-ending event into a 20-minute rewind. The restore drill is the actual product: you discover the broken script, missing WAL, and undocumented step on a calm Tuesday instead of during the outage.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> WAL archiving that silently stops (full disk, expired credentials) leaves you with a base backup and a gap — monitor <code>archive_command</code> failures like production errors, because they are. And a plain-SQL <code>pg_dump</code> of a big DB restores single-threaded for hours; always use <code>-Fc</code> so <code>pg_restore -j</code> can parallelize.</div>
+</section>
+
+<section class="uc" id="uc45">
+  <h2><span class="num">45</span>Roles &amp; least privilege — stop connecting as postgres</h2>
+  <p class="scenario">Scenario: the web app connects as a superuser “because it works”. One SQL injection now owns every database, can read every table, and can drop them too. Ten minutes of GRANTs fixes this forever.</p>
+  <div class="analogy"><b>Analogy:</b> Office keys: interns get the reading-room key, staff get their own office, and nobody carries the master key that opens the vault, the server room, and the shredder — especially not the person standing closest to the front door (the web app).</div>
+  <div class="label">The minimal sane setup</div>
+  <pre><code><span class="cm">-- app role: exactly CRUD, nothing else</span>
+<span class="kw">CREATE ROLE</span> app_rw <span class="kw">LOGIN PASSWORD</span> <span class="str">'...'</span>;
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> app_rw;
+<span class="kw">GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> app_rw;
+
+<span class="cm">-- future tables get the same grants automatically:</span>
+<span class="kw">ALTER DEFAULT PRIVILEGES IN SCHEMA</span> public
+  <span class="kw">GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO</span> app_rw;
+
+<span class="cm">-- read-only role for BI, analysts, dashboards</span>
+<span class="kw">CREATE ROLE</span> app_ro <span class="kw">LOGIN PASSWORD</span> <span class="str">'...'</span>;
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> app_ro;
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> app_ro;</code></pre>
+  <div class="label">Who can do what</div>
+  <table class="out">
+    <tr><th>role</th><th>SELECT</th><th>write rows</th><th>DROP TABLE</th><th>create roles</th></tr>
+    <tr><td>app_rw (web app)</td><td>✓</td><td>✓</td><td style="color:var(--green)">✗</td><td style="color:var(--green)">✗</td></tr>
+    <tr><td>app_ro (BI tools)</td><td>✓</td><td style="color:var(--green)">✗</td><td style="color:var(--green)">✗</td><td style="color:var(--green)">✗</td></tr>
+    <tr><td>migrator (CI only)</td><td>✓</td><td>✓</td><td>✓ (DDL owner)</td><td style="color:var(--green)">✗</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Separate roles: app (DML), migrator (DDL), analyst (read-only)</li><li><code>ALTER DEFAULT PRIVILEGES</code> so new tables don’t arrive permission-broken</li><li>Grant BI tools access to views (#42), not raw tables</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>App connects as <code>postgres</code>/superuser — injection = total loss; also silently bypasses RLS (#17)</li><li>One shared human login for the whole team — the audit log (#20) says “admin did it” forever</li><li>GRANT ALL as the fix for every permission error</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Least privilege converts “SQL injection” from game-over into a contained incident, and makes RLS (#17) and audit trails (#20) actually mean something. Roles are free; the setup is ten minutes once.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> <code>GRANT ... ON ALL TABLES</code> covers <em>existing</em> tables only — the next migration adds a table and the app gets “permission denied” at 2am. That’s what <code>ALTER DEFAULT PRIVILEGES</code> is for — but note it applies to objects created by <em>the role that ran it</em>: run it as your migrator role, or it silently does nothing useful.</div>
+</section>
+
+<section class="uc" id="uc46">
+  <h2><span class="num">46</span>Extended statistics — when the planner multiplies wrong</h2>
+  <p class="scenario">Scenario: <code>WHERE city = 'Pune' AND pincode = '411001'</code> is estimated at 40 rows but returns 120,000 — the planner picked a nested loop and the query takes minutes. Why? It assumed the columns are independent.</p>
+  <div class="analogy"><b>Analogy:</b> “Lives in Pune” and “has a Pune pincode” aren’t two independent coin flips — but the planner multiplies them as if they were: 2% × 0.1% = almost nobody. Extended statistics teach it that the two facts travel together.</div>
+  <div class="label">The fix</div>
+  <pre><code><span class="kw">CREATE STATISTICS</span> stat_city_pin (dependencies)
+  <span class="kw">ON</span> city, pincode <span class="kw">FROM</span> addresses;
+<span class="kw">ANALYZE</span> addresses;</code></pre>
+  <div class="label">Output — estimate vs reality</div>
+  <table class="out">
+    <tr><th></th><th>estimated rows</th><th>actual rows</th><th>plan chosen</th></tr>
+    <tr><td>before</td><td style="color:var(--red)">40</td><td>120,000</td><td>Nested Loop (catastrophic)</td></tr>
+    <tr><td>after</td><td style="color:var(--green)">108,400</td><td>120,000</td><td>Hash Join (correct)</td></tr>
+  </table>
+  <div class="dodont"><div class="dd do"><h4>✅ Do — good use cases</h4><ul><li>Correlated column pairs: city+pincode, country+currency, category+brand</li><li>Any time EXPLAIN ANALYZE (#21) shows estimates off by 100×+ on multi-column filters</li><li>Also available: <code>ndistinct</code> for GROUP BY estimates, <code>mcv</code> for common combos</li></ul></div><div class="dd dont"><h4>❌ Don’t — anti-patterns</h4><ul><li>“Fixing” bad estimates by disabling nested loops globally (<code>enable_nestloop=off</code>) — punishes every other query</li><li>Sprinkling CREATE STATISTICS on every column pair preemptively — target proven misestimates, they cost ANALYZE time</li></ul></div></div>
+  <div class="benefit"><b>Pattern &amp; benefit:</b> Most mystery slowness is misestimation: wrong row counts → wrong join strategy → minutes instead of milliseconds. One CREATE STATISTICS + ANALYZE repairs the estimate at the source, and every query touching that column pair benefits — no hints, no rewrites.</div>
+  <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Extended statistics only apply to plain column references — <code>WHERE lower(city) = ...</code> or expressions won’t use them (expression statistics exist separately in PG 14+). And they’re only as fresh as your last ANALYZE — a big data load followed by no ANALYZE means the planner is navigating with last month’s map.</div>
+</section>
+
+<footer>
+  <p><b>PostgreSQL Pro Playbook</b> · 46 use cases · Do/Don’t, analogies, gotchas &amp; patterns verified against PostgreSQL 16+ behavior</p>
+  <p style="margin-top:6px">Golden rules: measure before tuning (#21, #22) · let the DB enforce truth (#17, #23) · index what you query (#08–#10) · keep transactions short (#29)</p>
+</footer>
+
+</div>
+<a class="top" href="#top">↑ Top</a>
+</body>
+</html>

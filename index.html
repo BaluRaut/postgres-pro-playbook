@@ -63,6 +63,34 @@
   .dd.dont li::before{content:'✕';position:absolute;left:0;color:var(--red);font-weight:700}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .toolbar{position:sticky;top:8px;z-index:50;display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--card);border-radius:14px;box-shadow:var(--sh2);padding:12px 16px;margin-bottom:22px}
+  #ppb-search{flex:1;min-width:200px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:.9rem;font-family:inherit;outline:2px solid transparent;transition:outline .15s}
+  #ppb-search:focus{outline:2px solid var(--primary);border-color:var(--primary)}
+  .tb-group{display:flex;gap:6px;align-items:center}
+  .toolbar button{background:#e8f0fe;color:var(--primary-dark);border:none;border-radius:20px;padding:8px 14px;font-weight:500;font-size:.8rem;cursor:pointer;font-family:inherit;transition:background .15s}
+  .toolbar button:hover{background:#d2e3fc}
+  #hit-count{font-size:.78rem;color:var(--muted);min-width:70px}
+  section.uc h2{cursor:pointer;user-select:none;display:flex;align-items:center}
+  section.uc h2::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s;font-size:1rem;padding-left:12px}
+  section.uc.collapsed h2::after{transform:rotate(-90deg)}
+  section.uc.collapsed .uc-body{display:none}
+  section.uc.collapsed{padding-bottom:22px}
+  section.uc.collapsed h2{margin-bottom:0}
+  mark{background:#fff59d;border-radius:3px;padding:0 2px}
+  .quiz-q{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:var(--sh1)}
+  .quiz-q h4{font-size:.95rem;margin-bottom:12px;font-weight:500}
+  .quiz-q h4 .qn{color:var(--primary);font-weight:700;margin-right:8px}
+  .quiz-opt{display:block;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:.87rem;transition:background .15s}
+  .quiz-opt:hover{background:#f1f6fd}
+  .quiz-opt.correct{background:#e6f4ea;border-color:var(--green);font-weight:500}
+  .quiz-opt.wrong{background:#fce8e6;border-color:var(--red)}
+  .quiz-q.answered .quiz-opt{pointer-events:none;opacity:.85}
+  .quiz-q.answered .quiz-opt.correct,.quiz-q.answered .quiz-opt.wrong{opacity:1}
+  .quiz-exp{display:none;background:#e8f0fe;border-radius:8px;padding:10px 14px;font-size:.83rem;margin-top:6px}
+  .quiz-exp.show{display:block}
+  .quiz-exp a{color:var(--primary-dark);font-weight:500}
+  #quiz-score{font-weight:700;color:var(--primary-dark)}
+  #quiz-reset{background:#fce8e6;color:#c5221f;border:none;border-radius:16px;padding:5px 12px;font-size:.75rem;cursor:pointer;margin-left:10px;font-family:inherit}
   footer{color:var(--muted);font-size:.8rem;text-align:center;padding:36px 0 20px;margin-top:36px;border-top:1px solid var(--border)}
   a.top{position:fixed;bottom:22px;right:22px;background:var(--primary);color:#fff;border:none;border-radius:28px;padding:12px 20px;text-decoration:none;font-size:.82rem;font-weight:500;box-shadow:var(--sh2)}
   a.top:hover{background:var(--primary-dark)}
@@ -76,6 +104,20 @@
   <h1>PostgreSQL <span>Pro Playbook</span></h1>
   <p>The patterns a 20-year Postgres veteran reaches for daily — each with a real table, a real query, real output, and why the pattern wins. Copy, run, adapt.</p>
 </header>
+
+<div class="toolbar">
+  <input id="ppb-search" type="search" placeholder="Search 46 use cases… e.g. index, lock, json, vacuum">
+  <span id="hit-count"></span>
+  <div class="tb-group">
+    <button id="fs-dec" title="Smaller text">A−</button>
+    <button id="fs-reset" title="Reset text size">A</button>
+    <button id="fs-inc" title="Larger text">A+</button>
+  </div>
+  <div class="tb-group">
+    <button id="exp-all">Expand all</button>
+    <button id="col-all">Collapse all</button>
+  </div>
+</div>
 
 <nav class="toc">
   <a href="#uc1"><b>01</b>UPSERT — ON CONFLICT</a>
@@ -124,6 +166,7 @@
   <a href="#uc44"><b>44</b>Backups — dump vs PITR</a>
   <a href="#uc45"><b>45</b>Roles &amp; least privilege</a>
   <a href="#uc46"><b>46</b>Extended statistics</a>
+  <a href="#quiz" style="background:#fef7e0"><b>🎯</b>Quiz — test yourself</a>
 </nav>
 
 <h3 class="cat">Writing Data</h3>
@@ -1406,12 +1449,195 @@ pgbackrest --stanza=main restore --type=time <span class="str">"--target=2026-07
   <div class="gotcha"><b>Gotcha — why it goes wrong:</b> Extended statistics only apply to plain column references — <code>WHERE lower(city) = ...</code> or expressions won’t use them (expression statistics exist separately in PG 14+). And they’re only as fresh as your last ANALYZE — a big data load followed by no ANALYZE means the planner is navigating with last month’s map.</div>
 </section>
 
+<h3 class="cat">Test Yourself</h3>
+
+<section class="uc" id="quiz">
+  <h2><span class="num">🎯</span>Quiz — 20 questions from the playbook</h2>
+  <p class="scenario">Click an answer for instant feedback, with a link back to the use case it came from. Score: <span id="quiz-score">0 / 0</span><button id="quiz-reset">Reset quiz</button></p>
+  <div id="quiz-box"></div>
+</section>
+
 <footer>
-  <p><b>PostgreSQL Pro Playbook</b> · 46 use cases · Do/Don’t, analogies, gotchas &amp; patterns verified against PostgreSQL 16+ behavior</p>
+  <p><b>PostgreSQL Pro Playbook</b> · 46 use cases · Search · quiz · Do/Don’t · analogies · gotchas &amp; patterns verified against PostgreSQL 16+ behavior</p>
   <p style="margin-top:6px">Golden rules: measure before tuning (#21, #22) · let the DB enforce truth (#17, #23) · index what you query (#08–#10) · keep transactions short (#29)</p>
 </footer>
 
 </div>
 <a class="top" href="#top">↑ Top</a>
+<script>
+(function(){
+  // ===== Accordion: wrap everything after h2 into .uc-body =====
+  document.querySelectorAll('section.uc').forEach(function(sec){
+    var body = document.createElement('div');
+    body.className = 'uc-body';
+    var kids = Array.prototype.slice.call(sec.children);
+    kids.forEach(function(k){ if (k.tagName !== 'H2') body.appendChild(k); });
+    sec.appendChild(body);
+    sec.classList.add('collapsed');
+    sec.querySelector('h2').addEventListener('click', function(){
+      sec.classList.toggle('collapsed');
+    });
+  });
+  function expandSec(sec){ if (sec) sec.classList.remove('collapsed'); }
+
+  // open section on TOC click / hash navigation
+  document.querySelectorAll('nav.toc a').forEach(function(a){
+    a.addEventListener('click', function(){
+      var id = a.getAttribute('href').slice(1);
+      expandSec(document.getElementById(id));
+    });
+  });
+  if (location.hash) expandSec(document.getElementById(location.hash.slice(1)));
+
+  document.getElementById('exp-all').onclick = function(){
+    document.querySelectorAll('section.uc').forEach(function(s){ s.classList.remove('collapsed'); });
+  };
+  document.getElementById('col-all').onclick = function(){
+    document.querySelectorAll('section.uc').forEach(function(s){ s.classList.add('collapsed'); });
+  };
+
+  // ===== Font size control =====
+  var FS_KEY = 'ppb-font', fs = parseFloat(localStorage.getItem(FS_KEY) || '16');
+  function applyFS(){ document.documentElement.style.fontSize = fs + 'px'; localStorage.setItem(FS_KEY, fs); }
+  applyFS();
+  document.getElementById('fs-inc').onclick   = function(){ fs = Math.min(22, fs + 1); applyFS(); };
+  document.getElementById('fs-dec').onclick   = function(){ fs = Math.max(12, fs - 1); applyFS(); };
+  document.getElementById('fs-reset').onclick = function(){ fs = 16; applyFS(); };
+
+  // ===== Search =====
+  var input = document.getElementById('ppb-search'), hitEl = document.getElementById('hit-count');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.uc'));
+  var cats = Array.prototype.slice.call(document.querySelectorAll('h3.cat'));
+  function refreshCats(){
+    cats.forEach(function(cat){
+      var el = cat.nextElementSibling, any = false;
+      while (el && el.tagName !== 'H3'){
+        if (el.classList && el.classList.contains('uc') && el.style.display !== 'none') { any = true; break; }
+        el = el.nextElementSibling;
+      }
+      cat.style.display = any ? '' : 'none';
+    });
+  }
+  input.addEventListener('input', function(){
+    var q = input.value.trim().toLowerCase();
+    if (q.length < 2){
+      sections.forEach(function(s){ s.style.display = ''; });
+      refreshCats(); hitEl.textContent = '';
+      return;
+    }
+    var hits = 0;
+    sections.forEach(function(s){
+      var match = s.textContent.toLowerCase().indexOf(q) !== -1;
+      s.style.display = match ? '' : 'none';
+      if (match){ s.classList.remove('collapsed'); hits++; }
+    });
+    refreshCats();
+    hitEl.textContent = hits + ' match' + (hits === 1 ? '' : 'es');
+  });
+
+  // ===== Quiz =====
+  var QUIZ = [
+    {q:"You want INSERT to be safe to retry — same request twice must not create duplicates. Which Postgres feature?",
+     o:["A BEFORE INSERT trigger that checks first","INSERT ... ON CONFLICT","SERIALIZABLE isolation","A SELECT before every INSERT"], a:1,
+     e:"ON CONFLICT resolves insert-or-update atomically in one statement — no race, no retry errors.", l:"#uc1"},
+    {q:"Why prefer jsonb over json?",
+     o:["json is deprecated","jsonb validates schemas","jsonb is binary, deduplicated, and GIN-indexable","json can't store arrays"], a:2,
+     e:"jsonb parses once into binary form and supports containment queries backed by GIN indexes.", l:"#uc2"},
+    {q:"'Top 2 highest-paid employees per department' — the canonical tool?",
+     o:["GROUP BY dept + MAX(salary)","Two self-joins","ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC)","SELECT DISTINCT"], a:2,
+     e:"Window functions rank within each partition in one scan; filter rn <= 2 in an outer query.", l:"#uc3"},
+    {q:"WHERE id NOT IN (SELECT banned_id FROM bans) returns zero rows always. Most likely cause?",
+     o:["Missing index","A NULL in banned_id","Table is partitioned","Wrong isolation level"], a:1,
+     e:"One NULL makes NOT IN unknowable for every row — use NOT EXISTS instead.", l:"#uc31"},
+    {q:"99% of orders are 'completed'; you only ever query the pending 1%. Best index?",
+     o:["Full index on status","Partial index: ... WHERE status = 'pending'","GIN index on the row","Index on id"], a:1,
+     e:"A partial index covers only the queried subset — ~100× smaller, and completed-row writes never touch it.", l:"#uc8"},
+    {q:"Why is OFFSET 100000 LIMIT 20 slow?",
+     o:["LIMIT forces a sort","Postgres reads and throws away 100,000 rows first","OFFSET disables indexes","Network latency"], a:1,
+     e:"OFFSET must produce and discard every skipped row. Keyset pagination seeks directly instead.", l:"#uc10"},
+    {q:"20 workers pull jobs from one table without fighting over rows. The magic clause?",
+     o:["FOR SHARE","LOCK TABLE","FOR UPDATE SKIP LOCKED","NOWAIT"], a:2,
+     e:"SKIP LOCKED skips rows other workers hold, so each worker instantly grabs a different job.", l:"#uc11"},
+    {q:"EXPLAIN shows 'Heap Fetches: 0'. What happened?",
+     o:["The table is empty","Index-only scan — the index answered everything","The query was cached","Sequential scan"], a:1,
+     e:"All needed columns were in the index (covering index) and the visibility map was current.", l:"#uc9"},
+    {q:"Tersest Postgres way to get the latest reading per device?",
+     o:["GROUP BY device_id","DISTINCT ON (device_id) ... ORDER BY device_id, at DESC","MAX(at) in a subquery","LIMIT 1 per device in app code"], a:1,
+     e:"DISTINCT ON keeps the first row per key according to ORDER BY — Postgres-only and very fast with the right index.", l:"#uc12"},
+    {q:"Guarantee no two bookings overlap for the same room, under any concurrency?",
+     o:["Check in app code before insert","UNIQUE(room, start_time)","EXCLUDE USING gist (room WITH =, during WITH &&)","SERIALIZABLE everywhere"], a:2,
+     e:"An exclusion constraint rejects overlapping ranges at the storage layer — check-then-insert always races.", l:"#uc23"},
+    {q:"How do you safely run EXPLAIN ANALYZE on an UPDATE?",
+     o:["You can't","It's read-only, just run it","Inside BEGIN; ... ROLLBACK;","Add LIMIT 0"], a:2,
+     e:"EXPLAIN ANALYZE really executes the statement — wrap it in a transaction you roll back.", l:"#uc21"},
+    {q:"In pg_stat_statements, which column finds the queries actually eating your database?",
+     o:["mean_exec_time","calls","total_exec_time","rows"], a:2,
+     e:"An 8ms query called a million times beats one 23s report. Sort by total time consumed.", l:"#uc22"},
+    {q:"Does Postgres automatically index foreign key columns?",
+     o:["Yes, always","Only with CASCADE","No — only the referenced (PK) side is indexed","Only in PG 15+"], a:2,
+     e:"The referencing column gets no index — parent deletes then seq-scan the child table. Index FKs yourself.", l:"#uc36"},
+    {q:"High-insert table needs public, non-guessable IDs. Best choice?",
+     o:["UUIDv4","bigint identity exposed in URLs","UUIDv7","md5(random())"], a:2,
+     e:"UUIDv7 is time-ordered, so it inserts append-mostly like a sequence while staying unguessable.", l:"#uc38"},
+    {q:"Can LISTEN/NOTIFY replace a durable job queue?",
+     o:["Yes, notifications are persisted","No — if nobody is listening, the message is gone","Yes, with JSON payloads","Only with logical replication"], a:1,
+     e:"NOTIFY is a doorbell, not a mailbox. Keep the jobs in a table (#11); use NOTIFY just to wake workers.", l:"#uc25"},
+    {q:"Fastest way to load 10 million rows from CSV?",
+     o:["Batched multi-row INSERTs","ORM bulk_create","COPY","pg_restore"], a:2,
+     e:"COPY streams data in one protocol message — roughly 100× faster than row-by-row INSERTs.", l:"#uc26"},
+    {q:"Adding an index to a 200M-row table on a live production system — the safe command?",
+     o:["CREATE INDEX during low traffic","CREATE INDEX CONCURRENTLY","Take a maintenance window","REINDEX"], a:1,
+     e:"Plain CREATE INDEX blocks all writes for the whole build; CONCURRENTLY builds without blocking.", l:"#uc33"},
+    {q:"Why do heavily-updated tables slow down without VACUUM?",
+     o:["Indexes expire","MVCC keeps dead row versions until vacuum reclaims them","WAL fills the disk","Statistics reset"], a:1,
+     e:"Every UPDATE leaves the old version behind; scans wade through dead tuples until vacuum cleans up.", l:"#uc29"},
+    {q:"App opens 800 connections; DB struggles though mostly idle. Standard fix?",
+     o:["Raise max_connections","Faster disks","PgBouncer in transaction pooling mode","More RAM"], a:2,
+     e:"Each connection is a full OS process. A small pooled set of real connections serves thousands of clients.", l:"#uc30"},
+    {q:"What does timestamptz actually store?",
+     o:["The timestamp plus the client's timezone name","A UTC instant, converted at display time","Local wall-clock time","Unix epoch with offset"], a:1,
+     e:"One unambiguous instant (same 8 bytes as timestamp); the session timezone only affects rendering.", l:"#uc32"}
+  ];
+
+  var box = document.getElementById('quiz-box'), scoreEl = document.getElementById('quiz-score');
+  var answered = 0, correct = 0;
+  function updScore(){ scoreEl.textContent = correct + ' / ' + answered + (answered === QUIZ.length ? '  —  ' + Math.round(100*correct/QUIZ.length) + '%' : ''); }
+  function render(){
+    answered = 0; correct = 0; updScore();
+    box.innerHTML = '';
+    QUIZ.forEach(function(item, qi){
+      var qd = document.createElement('div'); qd.className = 'quiz-q';
+      var h = document.createElement('h4');
+      h.innerHTML = '<span class="qn">Q' + (qi+1) + '</span>' + item.q;
+      qd.appendChild(h);
+      item.o.forEach(function(opt, oi){
+        var od = document.createElement('div'); od.className = 'quiz-opt'; od.textContent = opt;
+        od.addEventListener('click', function(){
+          if (qd.classList.contains('answered')) return;
+          qd.classList.add('answered'); answered++;
+          if (oi === item.a){ od.classList.add('correct'); correct++; }
+          else { od.classList.add('wrong'); qd.children[1 + item.a].classList.add('correct'); }
+          qd.querySelector('.quiz-exp').classList.add('show');
+          updScore();
+        });
+        qd.appendChild(od);
+      });
+      var ex = document.createElement('div'); ex.className = 'quiz-exp';
+      ex.innerHTML = '💡 ' + item.e + ' <a href="' + item.l + '">→ use case ' + item.l.replace('#uc','#') + '</a>';
+      qd.appendChild(ex);
+      box.appendChild(qd);
+    });
+    // clicking explanation links opens the target section
+    box.querySelectorAll('.quiz-exp a').forEach(function(a){
+      a.addEventListener('click', function(){
+        var t = document.getElementById(a.getAttribute('href').slice(1));
+        if (t) t.classList.remove('collapsed');
+      });
+    });
+  }
+  document.getElementById('quiz-reset').addEventListener('click', function(e){ e.stopPropagation(); render(); });
+  render();
+})();
+</script>
 </body>
 </html>
